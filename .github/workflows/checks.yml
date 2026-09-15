@@ -1,0 +1,23 @@
+name: Parser and package
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  checks:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Run parser regressions
+        run: python -m unittest discover -s skills/reddit-search/scripts/tests -v
+      - name: Build skill packages
+        run: python tools/build_package.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skill-${{ matrix.os }}
+          path: dist/

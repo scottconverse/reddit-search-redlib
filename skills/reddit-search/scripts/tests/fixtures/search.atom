@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>reddit search</title>
+  <entry>
+    <title>Redlib example</title>
+    <link href="https://www.reddit.com/r/foss/comments/abc123/redlib_example/" />
+    <updated>2026-09-14T12:00:00Z</updated>
+    <author><name>example_author</name></author>
+    <content type="html">&lt;div class=&quot;md&quot;&gt;&lt;p&gt;Full body example.&lt;/p&gt;&lt;/div&gt;</content>
+  </entry>
+</feed>
