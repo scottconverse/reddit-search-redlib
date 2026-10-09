@@ -46,7 +46,7 @@ Prefer the local Redlib adapter only when it is usable. A running server whose u
 
 Use `scripts/reddit_extract.py` when deterministic parsing or URL construction is helpful. It has no third-party Python dependencies and accepts saved content or stdin. It does not choose public instances or silently make network requests.
 
-Use `scripts/get_redlib_instances.ps1` to read the current official public registry. The registry is discovery metadata, not proof of uptime.
+Use `scripts/get_redlib_instances.ps1` to read the current official public registry. The registry is discovery metadata, not proof of uptime. Inspect at most one selected public instance with `/info.json`; fall back rather than cycling through the list.
 
 ## Request discipline
 
