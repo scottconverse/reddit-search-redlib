@@ -32,6 +32,5 @@ Do not add an automatic logon task or Windows service unless the user separately
 - Never launch with `--ipv4-only`: it can bind beyond loopback. Use `--address 127.0.0.1`.
 - Redlib's environment variables are prefixed, including `REDLIB_ENABLE_RSS`, `REDLIB_FULL_URL`, and `REDLIB_ROBOTS_DISABLE_INDEXING`.
 - The crate/version string may lag the source revision; verify `git_commit`, not only the displayed version.
-- A successful `/info.json` proves the process is running, not that Reddit content is reachable.
 - Do not move the pin to a newer `main` commit automatically. A new commit needs a fresh build and live usability review before packaging.
 - If upstream verification fails, stop the local process unless the user is actively diagnosing it, then continue with RSS or a single explicitly acceptable public instance.

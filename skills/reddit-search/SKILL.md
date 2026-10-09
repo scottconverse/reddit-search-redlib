@@ -46,7 +46,7 @@ Prefer the local Redlib adapter only when it is usable. A running server whose u
 
 Use `scripts/reddit_extract.py` when deterministic parsing or URL construction is helpful. It has no third-party Python dependencies and accepts saved content or stdin. It does not choose public instances or silently make network requests.
 
-Use `scripts/get_redlib_instances.ps1` to read the current official public registry. The registry is discovery metadata, not proof of uptime. Inspect at most one selected public instance with `/info.json`; fall back rather than cycling through the list.
+Use `scripts/get_redlib_instances.ps1` to read the current official public registry. The registry is discovery metadata, not proof of uptime.
 
 ## Request discipline
 
@@ -54,7 +54,7 @@ Use `scripts/get_redlib_instances.ps1` to read the current official public regis
 - Never batch Reddit requests in parallel. Public Redlib instances also share an upstream Reddit identity; parallelism can harm the instance even when client IPs differ.
 - On 429, honor `Retry-After` when present, stop issuing requests to that host, and resume only within the task's time budget. After three consecutive 429 responses from a path, open its circuit for the rest of the task.
 - Bound research by both time and request count. A useful partial answer is better than indefinite backoff.
-- Do not interpret 404 uniformly: distinguish an absent/deleted thread from an instance route problem when evidence permits.
+- Classify a 404 as a missing thread or a route problem when the evidence allows, because the two mean different things for coverage.
 
 ## Coverage rules
 
