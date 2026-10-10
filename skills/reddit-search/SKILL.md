@@ -1,6 +1,8 @@
 ---
 name: reddit-search
 description: Research Reddit discussions with traceable permalinks, dates, and honest coverage. Use for practitioner experience, product opinions, troubleshooting, community consensus, or whenever the user asks what Reddit or a subreddit says. Combines Reddit RSS with optional Redlib enrichment rather than depending on one access path.
+metadata:
+  version: "0.1.1"
 ---
 
 # Reddit research
@@ -25,7 +27,11 @@ For exact routes, fields, validation rules, and the normalized record shape, rea
 
 ### Local Redlib on Windows
 
-When the user asks to install or enable a local Redlib, read [references/windows-redlib.md](references/windows-redlib.md). The bundled lifecycle scripts use native Windows tooling only—never WSL or containers. Installation and process creation are explicit actions; do not run them merely because this research skill was unpacked.
+When the user explicitly asks to install `reddit-search` on native Windows, read [references/windows-redlib.md](references/windows-redlib.md) and run `scripts/install_windows.ps1`. This installs the skill and provisions or reuses Redlib, then checks a Reddit-backed content response before reporting success. A bare copy is not the complete Windows install. The entrypoint accepts Windows PowerShell 5.1 and relaunches itself in PowerShell 7 when needed; it never runs just because an archive was unpacked.
+
+Use `-RssOnly` only when the user explicitly chooses an RSS-only setup. The receipt then says Redlib was omitted and RSS network access was not live-tested. A failed Redlib gate does not silently switch modes or replace the last successful configuration.
+
+Read the saved selection with `scripts/get_redlib_config.ps1`. A Redlib endpoint is a last-known setting; before using it in a research task, run `scripts/test_redlib_windows.ps1` and select Redlib only when `usable` is true. The bundled lifecycle scripts use native Windows tooling only—never WSL or containers.
 
 Treat these as separate states:
 
@@ -54,7 +60,7 @@ Use `scripts/get_redlib_instances.ps1` to read the current official public regis
 - Never batch Reddit requests in parallel. Public Redlib instances also share an upstream Reddit identity; parallelism can harm the instance even when client IPs differ.
 - On 429, honor `Retry-After` when present, stop issuing requests to that host, and resume only within the task's time budget. After three consecutive 429 responses from a path, open its circuit for the rest of the task.
 - Bound research by both time and request count. A useful partial answer is better than indefinite backoff.
-- Do not interpret 404 uniformly: distinguish an absent/deleted thread from an instance route problem when evidence permits.
+- Classify a 404 as a missing thread or a route problem when the evidence allows, because the two mean different things for coverage.
 
 ## Coverage rules
 

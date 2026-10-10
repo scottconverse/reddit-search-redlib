@@ -1,55 +1,71 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Installation, everyday use, Windows Redlib setup, troubleshooting, and removal for the Reddit Search + Redlib agent skill."><title>User manual — Reddit Search + Redlib</title><link rel="stylesheet" href="style.css"></head><body><header><nav class="wrap" aria-label="Main navigation"><a class="brand" href="./"><span class="mark" aria-hidden="true">r</span>Reddit Search + Redlib</a><div class="navlinks"><a href="./">Home</a><a href="https://github.com/scottconverse/reddit-search-redlib">GitHub ↗</a></div></nav></header><main class="manual"><div class="markdown-heading"><h1 id="reddit-search--redlib--user-manual">Reddit Search + Redlib — user manual</h1><a id="user-content-reddit-search--redlib--user-manual" class="anchor" aria-label="Permalink: Reddit Search + Redlib — user manual" href="#reddit-search--redlib--user-manual"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
-<div class="markdown-heading"><h2 id="1-what-you-are-installing">1. What you are installing</h2><a id="user-content-1-what-you-are-installing" class="anchor" aria-label="Permalink: 1. What you are installing" href="#1-what-you-are-installing"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Installation, everyday use, Windows Redlib setup, troubleshooting, and removal for the Reddit Search + Redlib agent skill."><title>User manual — Reddit Search + Redlib v0.1.1</title><link rel="stylesheet" href="style.css"></head><body><header><nav class="wrap" aria-label="Main navigation"><a class="brand" href="./"><span class="mark" aria-hidden="true">r</span>Reddit Search + Redlib</a><div class="navlinks"><a href="./">Home</a><a href="https://github.com/scottconverse/reddit-search-redlib">GitHub ↗</a></div></nav></header><main class="manual"><h1 id="reddit-search--redlib--user-manual">Reddit Search + Redlib — user manual</h1>
+<p><strong>Project version 0.1.1</strong> · <a href="https://github.com/scottconverse/reddit-search-redlib/blob/main/CHANGELOG.md">Changelog</a></p>
+<h2 id="1-what-you-are-installing">1. What you are installing</h2>
 <p>The skill teaches an AI assistant how to find, read, and summarize Reddit discussions. It includes a Python helper that constructs URLs and converts saved responses into structured records. The helper does not search by itself: your assistant fetches the pages and follows the skill's request limits.</p>
-<p>Redlib is an optional separate service. It retrieves Reddit content and presents it as HTML. The skill can use that HTML to recover fuller posts and available comment structure. You can start with RSS and add Redlib later.</p>
-<div class="markdown-heading"><h2 id="2-choose-your-app">2. Choose your app</h2><a id="user-content-2-choose-your-app" class="anchor" aria-label="Permalink: 2. Choose your app" href="#2-choose-your-app"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
-<div class="markdown-heading"><h3 id="codex">Codex</h3><a id="user-content-codex" class="anchor" aria-label="Permalink: Codex" href="#codex"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<p>Redlib is a separate service that retrieves Reddit content and presents it as HTML. The Windows installer sets it up by default; choose its explicit RSS-only mode if you want to omit it. The skill can use Redlib HTML to recover fuller posts and available comment structure.</p>
+<p><img src="diagrams/reddit-research-flow.svg" alt="Architecture drawing showing the assistant, Reddit RSS, same-host loopback Redlib, parser, trust boundaries, and citation output." /></p>
+<p><a href="diagrams/reddit-research-flow.svg">Open the full-size architecture diagram</a>.</p>
+<h2 id="2-choose-your-app">2. Choose your app</h2>
+<h3 id="codex">Codex</h3>
 <ol>
-<li>Download and extract the release ZIP.</li>
-<li>Copy the complete <code>reddit-search</code> directory into your home folder's <code>.agents/skills</code> directory. On Windows this is normally <code>C:\Users\YOUR-NAME\.agents\skills\reddit-search</code>.</li>
-<li>Keep <code>SKILL.md</code>, <code>scripts</code>, and <code>references</code> together. Do not nest an extra <code>reddit-search</code> folder inside it.</li>
-<li>Start a new turn and ask: “Use the reddit-search skill to find recent discussions about [topic].”</li>
+<li><p>Download and extract the release ZIP.</p>
+</li>
+<li><p>From the folder containing its top-level <code>reddit-search</code> folder, run this explicit Windows setup command:</p>
+<pre><code class="language-powershell">powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\reddit-search\scripts\install_windows.ps1
+</code></pre>
+<p>This installs or updates the complete skill and provisions or reuses local Redlib. Windows PowerShell 5.1 can run the entrypoint; it installs/reuses PowerShell 7 and relaunches itself there. Fresh Redlib builds bootstrap missing Python, Git, Rust/MSVC, CMake, NASM, and LLVM where supported. Existing pinned Redlib installs do not require the compiler toolchain.</p>
+</li>
+<li><p>Wait for the installer receipt. It reports Redlib usable only after a live Reddit-backed content request succeeds. If you want RSS only, explicitly add <code>-RssOnly</code>; the receipt will say Redlib was omitted and RSS was not live-tested.</p>
+</li>
+<li><p>Start a new turn and ask: “Use the reddit-search skill to find recent discussions about [topic].”</p>
+</li>
 </ol>
-<p>Check existing skill directories first. An older skill with the same name can cause confusion. Keep any backup outside directories the host scans for skills.</p>
-<div class="markdown-heading"><h3 id="deepseek-harness">DeepSeek Harness</h3><a id="user-content-deepseek-harness" class="anchor" aria-label="Permalink: DeepSeek Harness" href="#deepseek-harness"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<p>The ZIP does not execute anything when unpacked. If the assistant or host has a different supported skill directory, pass it as <code>-SkillDirectory</code>.</p>
+<h3 id="deepseek-harness">DeepSeek Harness</h3>
 <p>DSH can load the same folder through its filesystem skill provider. A project-local installation can live at <code>.dsh/skills/reddit-search</code> in the project root. For availability across projects, use the DSH home skills directory or configure the existing <code>@deepseek-ai/dsh-skill-filesystem</code> row in your agent preset:</p>
-<div class="highlight highlight-source-yaml"><pre>- <span class="pl-ent">id</span>: <span class="pl-s">skill-filesystem</span>
-  <span class="pl-ent">name</span>: <span class="pl-s"><span class="pl-pds">'</span>@deepseek-ai/dsh-skill-filesystem<span class="pl-pds">'</span></span>
-  <span class="pl-ent">config</span>:
-    <span class="pl-ent">customSkillDirs</span>:
-      - <span class="pl-s"><span class="pl-pds">'</span>C:/path/to/reddit-search-redlib/skills<span class="pl-pds">'</span></span></pre></div>
+<pre><code class="language-yaml">- id: skill-filesystem
+  name: '@deepseek-ai/dsh-skill-filesystem'
+  config:
+    customSkillDirs:
+      - 'C:/path/to/reddit-search-redlib/skills'
+</code></pre>
 <p>Edit the existing row; do not add a duplicate provider. The preset also needs DSH's skill catalog/loader components, normally supplied by its standard composition. Do not put this in an MCP configuration: the package is a skill, not an MCP server.</p>
 <p>Verify <code>reddit-search</code> appears in the session's skill menu/catalog, then explicitly select it for the first search. Our Halo deployment verified discovery; a model completing research in DSH remains a separate check.</p>
-<div class="markdown-heading"><h3 id="claude-code">Claude Code</h3><a id="user-content-claude-code" class="anchor" aria-label="Permalink: Claude Code" href="#claude-code"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<h3 id="claude-code">Claude Code</h3>
 <p>Copy <code>reddit-search</code> into <code>~/.claude/skills/</code> for personal use or <code>.claude/skills/</code> within a project. Start a new session if needed and ask it to use <code>reddit-search</code>. Claude Code needs permission to run Python and fetch the requested URLs.</p>
-<p>See <a href="https://code.claude.com/docs/en/skills" rel="nofollow">Claude Code's skill documentation</a>. Compatibility is based on the skill format; this project has not independently completed a Claude Code live trial.</p>
-<div class="markdown-heading"><h3 id="claude-desktop-and-cowork">Claude Desktop and Cowork</h3><a id="user-content-claude-desktop-and-cowork" class="anchor" aria-label="Permalink: Claude Desktop and Cowork" href="#claude-desktop-and-cowork"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
-<p>Where your account offers custom skills, upload <code>reddit-search-redlib.zip</code> through the Skills UI and enable it. The ZIP has one top-level <code>reddit-search</code> folder. See <a href="https://support.claude.com/en/articles/12512198-how-to-create-custom-skills" rel="nofollow">Claude's custom skill instructions</a>.</p>
+<p>See <a href="https://code.claude.com/docs/en/skills">Claude Code's skill documentation</a>. Compatibility is based on the skill format; this project has not independently completed a Claude Code live trial.</p>
+<h3 id="claude-desktop-and-cowork">Claude Desktop and Cowork</h3>
+<p>Where your account offers custom skills, upload <code>reddit-search-redlib.zip</code> through the Skills UI and enable it. The ZIP has one top-level <code>reddit-search</code> folder. See <a href="https://support.claude.com/en/articles/12512198-how-to-create-custom-skills">Claude's custom skill instructions</a>.</p>
 <p>Skill availability does not establish access to your local machine. A sandbox's <code>127.0.0.1</code> may refer to that sandbox rather than Windows. Start by testing RSS, then verify access to the configured Redlib endpoint from the actual execution environment. Don't assume a desktop window means local execution.</p>
-<div class="markdown-heading"><h2 id="3-first-search">3. First search</h2><a id="user-content-3-first-search" class="anchor" aria-label="Permalink: 3. First search" href="#3-first-search"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<h2 id="3-first-search">3. First search</h2>
 <p>Use a bounded request with an explicit invocation:</p>
 <blockquote>
 <p>Use reddit-search to compare owners' experiences with [two products]. Read up to three relevant discussions. Include dates and direct links, separate recurring problems from isolated anecdotes, and report any inaccessible or missing comments.</p>
 </blockquote>
 <p>A useful result should identify the discussions read, their dates, and the limits of coverage. It should not cite a Redlib host as the permanent source. Citations should point to the original <code>www.reddit.com</code> discussion or comment.</p>
 <p>The skill can be selected automatically when its description matches your request, but host/model selection is not guaranteed. If it uses another provider, explicitly select <code>reddit-search</code> and inspect the reported tool activity.</p>
-<div class="markdown-heading"><h2 id="4-optional-local-redlib-on-windows">4. Optional local Redlib on Windows</h2><a id="user-content-4-optional-local-redlib-on-windows" class="anchor" aria-label="Permalink: 4. Optional local Redlib on Windows" href="#4-optional-local-redlib-on-windows"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<h2 id="4-optional-local-redlib-on-windows">4. Optional local Redlib on Windows</h2>
 <p>The native Windows installer uses no WSL or containers. It builds a pinned Redlib revision rather than shipping a binary. The first build can take time and uses compiler resources.</p>
-<p><strong>Prerequisites:</strong> PowerShell 7, Git for Windows, Rust configured for <code>x86_64-pc-windows-msvc</code>, and Visual C++ Build Tools with the C++ workload. The setup script can supply missing CMake, LLVM/Clang, and a hash-verified NASM download. <code>-SkipPrerequisiteInstall</code> requires those to be installed already.</p>
-<p>You can ask a local coding assistant:</p>
-<blockquote>
-<p>Using reddit-search's bundled Windows instructions, install local Redlib and start it. Use the default loopback address. Verify a real Reddit-backed request, not just health. Report whether it is installed, running, and usable. Do not add a startup task or service.</p>
-</blockquote>
-<p>For manual use, open PowerShell 7 in the repository and run:</p>
-<div class="highlight highlight-source-powershell"><pre>pwsh <span class="pl-k">-</span>NoProfile <span class="pl-k">-</span>File skills<span class="pl-k">/</span>reddit<span class="pl-k">-</span>search<span class="pl-k">/</span>scripts<span class="pl-k">/</span>setup_redlib_windows.ps1 <span class="pl-k">-</span>Start</pre></div>
-<p>Default location: <code>%LOCALAPPDATA%\RedditSearch\Redlib</code>.
+<p><strong>Prerequisites:</strong> The complete Windows entrypoint can install or reuse PowerShell 7 and Python 3.10+. For a fresh Redlib source build, it also installs or reuses Git for Windows, Rust's MSVC toolchain, Visual C++ Build Tools with the C++ workload, CMake, LLVM/Clang, and a hash-verified NASM download. A complete pinned Redlib installation only needs Git for the retained-source pin check; the compiler toolchain is not required for reuse. Network failures, canceled elevation, and restart requirements are reported instead of being treated as success. The new bootstrap path is implemented but has not been exercised end-to-end; release-prep checks cover RSS-only and reuse of an existing pinned build.</p>
+<p>Run the bundled one-command installer from the extracted release folder:</p>
+<pre><code class="language-powershell">powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\reddit-search\scripts\install_windows.ps1
+</code></pre>
+<p>This also copies the full skill into <code>%USERPROFILE%\.agents\skills\reddit-search</code>, keeps a backup of any prior skill, and checks a small Reddit-backed content response before it writes a success receipt. Add <code>-RssOnly</code> only when you want the skill without Redlib; that mode does not attempt Reddit network access.</p>
+<p>The entrypoint chooses an explicit <code>-RedlibInstallRoot</code> first, then a root in its saved configuration, then <code>%USERPROFILE%\TownReporterTools\Redlib</code>, then <code>%LOCALAPPDATA%\RedditSearch\Redlib</code>. For a fresh build, use a root beneath LOCALAPPDATA. Existing install receipts and executables are checked against the pinned commit before reuse.</p>
+<p><img src="diagrams/windows-install-flow.svg" alt="Windows install flow showing explicit RSS-only mode and the pinned Redlib reuse/build paths, then the live usability gate and failure cleanup." /></p>
+<p><a href="diagrams/windows-install-flow.svg">Open the full-size Windows setup diagram</a>.</p>
+<p>The saved mode and last successful setup receipt are stored in <code>%LOCALAPPDATA%\RedditSearch\config.json</code>; <code>get_redlib_config.ps1</code> reads them. This is saved state, not a live health probe. Start and test before using Redlib for a new task:</p>
+<pre><code class="language-powershell">powershell.exe -NoProfile -File .\reddit-search\scripts\get_redlib_config.ps1
+</code></pre>
+<p>Default Redlib location for a fresh build: <code>%LOCALAPPDATA%\RedditSearch\Redlib</code>.
 Default address: <code>http://127.0.0.1:18080</code>.</p>
 <p>The script pins source revision <code>a4d36e954cf1bd64f209cd8868c5a29edc81b374</code>. The displayed version may still say <code>0.36.0</code>; compare the commit rather than the version alone. This pin was usable in the Windows trial, but Reddit's upstream behavior can change.</p>
-<div class="markdown-heading"><h3 id="start-check-stop">Start, check, stop</h3><a id="user-content-start-check-stop" class="anchor" aria-label="Permalink: Start, check, stop" href="#start-check-stop"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
-<div class="highlight highlight-source-powershell"><pre>pwsh <span class="pl-k">-</span>NoProfile <span class="pl-k">-</span>File skills<span class="pl-k">/</span>reddit<span class="pl-k">-</span>search<span class="pl-k">/</span>scripts<span class="pl-k">/</span>start_redlib_windows.ps1
-pwsh <span class="pl-k">-</span>NoProfile <span class="pl-k">-</span>File skills<span class="pl-k">/</span>reddit<span class="pl-k">-</span>search<span class="pl-k">/</span>scripts<span class="pl-k">/</span>test_redlib_windows.ps1
-pwsh <span class="pl-k">-</span>NoProfile <span class="pl-k">-</span>File skills<span class="pl-k">/</span>reddit<span class="pl-k">-</span>search<span class="pl-k">/</span>scripts<span class="pl-k">/</span>stop_redlib_windows.ps1</pre></div>
-<p>You can instead ask your local assistant to perform these actions. The start script launches Redlib without a console window. Closing a browser tab does not stop it. No startup task or Windows service is installed; it must be started again after a reboot.</p>
+<h3 id="start-check-stop">Start, check, stop</h3>
+<pre><code class="language-powershell">pwsh -NoProfile -File &quot;$HOME\.agents\skills\reddit-search\scripts\start_redlib_windows.ps1&quot;
+pwsh -NoProfile -File &quot;$HOME\.agents\skills\reddit-search\scripts\test_redlib_windows.ps1&quot;
+pwsh -NoProfile -File &quot;$HOME\.agents\skills\reddit-search\scripts\stop_redlib_windows.ps1&quot;
+</code></pre>
+<p>You can instead ask your local assistant to perform these actions. When no <code>-InstallRoot</code> is supplied, the lifecycle scripts use the root saved in the successful configuration; without a configuration they use <code>%LOCALAPPDATA%\RedditSearch\Redlib</code>. An RSS-only saved configuration has no implicit Redlib root. The start script launches Redlib without a console window. Closing a browser tab does not stop it. No startup task or Windows service is installed; it must be started again after a reboot.</p>
 <p>The test reports three separate states:</p>
 <table>
 <thead>
@@ -65,7 +81,7 @@ pwsh <span class="pl-k">-</span>NoProfile <span class="pl-k">-</span>File skills
 </tr>
 <tr>
 <td>Running</td>
-<td>The expected local process answers health checks</td>
+<td>At the time of the check, the expected local process answers health checks</td>
 </tr>
 <tr>
 <td>Usable</td>
@@ -73,19 +89,16 @@ pwsh <span class="pl-k">-</span>NoProfile <span class="pl-k">-</span>File skills
 </tr>
 </tbody>
 </table>
-<p>Use Redlib only when the last state is true. If it is blocked upstream, fall back to RSS and disclose partial coverage. Advanced endpoint and build details are in <a href="https://github.com/scottconverse/reddit-search-redlib/blob/main/skills/reddit-search/references/windows-redlib.md">windows-redlib.md</a>.</p>
-<div class="markdown-heading"><h2 id="5-what-the-results-mean">5. What the results mean</h2><a id="user-content-5-what-the-results-mean" class="anchor" aria-label="Permalink: 5. What the results mean" href="#5-what-the-results-mean"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<p>The configuration getter returns the last saved receipt; it does not check present server health. Use Redlib only when a fresh content gate is true. A failed content gate does not silently switch the saved mode or overwrite the previous successful receipt. A server started by that failed installer run is stopped; a preexisting process is left running. Choose RSS-only explicitly when you want to omit Redlib. Advanced endpoint and build details are in the <a href="https://github.com/scottconverse/reddit-search-redlib/blob/main/skills/reddit-search/references/windows-redlib.md">Windows Redlib guide</a>.</p>
+<h2 id="5-what-the-results-mean">5. What the results mean</h2>
 <ul>
-<li>
-<strong>Complete:</strong> For a retrieved Redlib thread, the parser found as many comment bodies as the page reports and no detected “more” placeholders. This is relative to that response, not a guarantee of every Reddit comment ever posted.</li>
-<li>
-<strong>Partial:</strong> Some content is omitted or the RSS format cannot establish complete coverage.</li>
-<li>
-<strong>Unknown:</strong> The response does not supply enough information to establish completeness, as with search pages.</li>
+<li><strong>Complete:</strong> For a retrieved Redlib thread, the parser found as many comment bodies as the page reports and no detected “more” placeholders. This is relative to that response, not a guarantee of every Reddit comment ever posted.</li>
+<li><strong>Partial:</strong> Some content is omitted or the RSS format cannot establish complete coverage.</li>
+<li><strong>Unknown:</strong> The response does not supply enough information to establish completeness, as with search pages.</li>
 </ul>
 <p>Scores are observations at fetch time, not proof that a claim is true. Null means unavailable, not zero. RSS cannot reliably establish nested comment parents, so those fields remain null. Redlib provides nesting where its HTML includes it.</p>
 <p>Request pacing and retry limits are instructions followed by the assistant, not a system-wide traffic limiter. Multiple agents sharing an IP need coordination. On rate limits, honor Retry-After and stop within the task budget; do not hammer or rotate through public servers.</p>
-<div class="markdown-heading"><h2 id="6-troubleshooting">6. Troubleshooting</h2><a id="user-content-6-troubleshooting" class="anchor" aria-label="Permalink: 6. Troubleshooting" href="#6-troubleshooting"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<h2 id="6-troubleshooting">6. Troubleshooting</h2>
 <table>
 <thead>
 <tr>
@@ -129,14 +142,15 @@ pwsh <span class="pl-k">-</span>NoProfile <span class="pl-k">-</span>File skills
 </tbody>
 </table>
 <p>When reporting a bug, include the parser command, Python/PowerShell versions, Redlib commit if used, and the error. Remove private queries or credentials. <a href="https://github.com/scottconverse/reddit-search-redlib/issues">Open an issue</a>.</p>
-<div class="markdown-heading"><h2 id="7-update-or-remove">7. Update or remove</h2><a id="user-content-7-update-or-remove" class="anchor" aria-label="Permalink: 7. Update or remove" href="#7-update-or-remove"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<h2 id="7-update-or-remove">7. Update or remove</h2>
 <p>To update, back up the existing skill outside scanned directories, replace the whole folder with the new release, and start a fresh turn/session. Updating the skill does not automatically rebuild or update Redlib.</p>
 <p>To remove, delete the installed <code>reddit-search</code> skill folder. If you also want to remove local Redlib, stop it first with its bundled script, then remove its <code>%LOCALAPPDATA%\RedditSearch\Redlib</code> installation directory. Redlib installed no automatic startup entry. Shared build tools such as Git, Rust, and Visual Studio are separate and should be retained if other projects use them.</p>
-<div class="markdown-heading"><h2 id="8-for-developers">8. For developers</h2><a id="user-content-8-for-developers" class="anchor" aria-label="Permalink: 8. For developers" href="#8-for-developers"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<h2 id="8-for-developers">8. For developers</h2>
 <p>The parser uses the Python standard library. It accepts saved content or stdin and emits UTF-8 JSON. It never chooses public instances or silently fetches a URL.</p>
-<div class="highlight highlight-source-shell"><pre>python skills/reddit-search/scripts/reddit_extract.py url rss-search --query <span class="pl-s"><span class="pl-pds">"</span>local LLM memory<span class="pl-pds">"</span></span>
-python skills/reddit-search/scripts/reddit_extract.py parse rss --input saved.atom --source-url <span class="pl-s"><span class="pl-pds">"</span>https://www.reddit.com/search.rss?q=local<span class="pl-pds">"</span></span>
+<pre><code class="language-sh">python skills/reddit-search/scripts/reddit_extract.py url rss-search --query &quot;local LLM memory&quot;
+python skills/reddit-search/scripts/reddit_extract.py parse rss --input saved.atom --source-url &quot;https://www.reddit.com/search.rss?q=local&quot;
 python -m unittest discover -s skills/reddit-search/scripts/tests -v
-python tools/build_package.py</pre></div>
+python tools/build_package.py
+</code></pre>
 <p>The public tests use synthetic content with representative RSS/Redlib markup. Windows live-test results are documented in the README; CI checks parser behavior on Windows and Linux without requesting Reddit pages or building Redlib.</p>
-</main><footer class="wrap"><a href="./">← Back to Reddit Search + Redlib</a><a href="https://github.com/scottconverse/reddit-search-redlib/blob/main/USER-MANUAL.md">Read the Markdown source</a></footer></body></html>
+</main><footer class="wrap"><span>Reddit Search + Redlib v0.1.1</span><a href="./">← Back to Reddit Search + Redlib</a><a href="https://github.com/scottconverse/reddit-search-redlib/blob/main/USER-MANUAL.md">Read the Markdown source</a></footer></body></html>

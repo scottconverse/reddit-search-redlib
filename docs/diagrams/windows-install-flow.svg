@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 790" role="img" aria-labelledby="title desc">
+  <title id="title">Native Windows installation and Redlib usability gate</title>
+  <desc id="desc">The explicit installer backs up and installs the complete skill. RSS-only is an explicit branch with no Redlib and no live RSS test. Default setup resolves an existing root or a LOCALAPPDATA build root, then either validates a pinned existing Redlib without a compiler or bootstraps and builds the pinned source. Both paths verify a loopback-owned process and require a Reddit-backed content response before writing a success receipt. Failure preserves the previous receipt and only cleans up a process started by this run.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#35685a"/></marker>
+    <style>
+      text{font-family:Segoe UI,Arial,sans-serif;fill:#17332f}.title{font-size:27px;font-weight:700}.sub{font-size:15px;fill:#506a64}.lane{font-size:13px;font-weight:700;letter-spacing:1.3px;fill:#506a64}.box{fill:#fff;stroke:#cbd7cf;stroke-width:2;rx:14}.skill{fill:#e8f0e1;stroke:#7f9e70;stroke-width:2;rx:14}.rss{fill:#f4ead1;stroke:#c2a663;stroke-width:2;rx:14}.redlib{fill:#e5edf5;stroke:#7997b5;stroke-width:2;rx:14}.good{fill:#e7f1dc;stroke:#6f9955;stroke-width:2;rx:14}.bad{fill:#fff0e9;stroke:#be8061;stroke-width:2;rx:14}.decision{fill:#fff;stroke:#8a9d91;stroke-width:2}.label{font-size:17px;font-weight:700}.body{font-size:13px;fill:#506a64}.small{font-size:12px;fill:#506a64}.flow{fill:none;stroke:#35685a;stroke-width:3;marker-end:url(#arrow)}.return{fill:none;stroke:#a65c42;stroke-width:2.5;stroke-dasharray:7 6;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1360" height="790" rx="22" fill="#f5f4ee"/>
+  <text class="title" x="34" y="48">One-command Windows install</text>
+  <text class="sub" x="34" y="75">RSS-only is opt-in; full setup is accepted only after a Reddit-backed content check.</text>
+
+  <rect class="box" x="34" y="125" width="205" height="88"/>
+  <text class="label" x="58" y="160">Run installer</text><text class="body" x="58" y="186">PowerShell 5.1 or 7</text>
+  <rect class="skill" x="292" y="125" width="260" height="88"/>
+  <text class="label" x="316" y="158">Install complete skill</text><text class="body" x="316" y="184">Back up any prior copy</text>
+  <path class="flow" d="M239 169 H284"/>
+
+  <path class="decision" d="M670 112 L755 169 L670 226 L585 169 Z"/>
+  <text class="label" x="632" y="165">Mode?</text>
+  <path class="flow" d="M552 169 H578"/>
+  <rect class="rss" x="853" y="105" width="390" height="118"/>
+  <text class="label" x="879" y="141">Explicit -RssOnly</text>
+  <text class="body" x="879" y="168">Redlib omitted · RSS network not tested</text>
+  <text class="body" x="879" y="192">Writes an honest RSS-only receipt</text>
+  <path class="flow" d="M755 169 H845"/>
+
+  <path class="flow" d="M670 226 V284 H249 V316"/>
+  <text class="small" x="688" y="256">Default: Redlib setup</text>
+  <rect class="box" x="34" y="316" width="430" height="98"/>
+  <text class="label" x="58" y="351">Resolve installation root</text>
+  <text class="body" x="58" y="378">Explicit → saved config → legacy → LOCALAPPDATA</text>
+  <text class="small" x="58" y="399">Fresh builds stay under LOCALAPPDATA.</text>
+
+  <path class="flow" d="M464 365 H504"/>
+  <path class="decision" d="M590 299 L681 365 L590 431 L499 365 Z"/>
+  <text class="label" x="530" y="359">Pinned</text><text class="label" x="536" y="380">record?</text>
+
+  <rect class="redlib" x="735" y="285" width="260" height="110"/>
+  <text class="label" x="759" y="321">Reuse existing</text>
+  <text class="body" x="759" y="348">Verify retained source pin</text>
+  <text class="body" x="759" y="373">No compiler toolchain needed</text>
+  <path class="flow" d="M681 337 H727"/>
+  <text class="small" x="690" y="320">yes</text>
+
+  <rect class="redlib" x="735" y="424" width="260" height="120"/>
+  <text class="label" x="759" y="460">Fresh pinned build</text>
+  <text class="body" x="759" y="487">Bootstrap supported tools</text>
+  <text class="body" x="759" y="511">Build native Windows Redlib</text>
+  <text class="small" x="759" y="532">May require elevation or reboot</text>
+  <path class="flow" d="M590 431 V483 H727"/>
+  <text class="small" x="608" y="455">no</text>
+
+  <rect class="box" x="1052" y="347" width="270" height="128"/>
+  <text class="label" x="1075" y="383">Verify local server</text>
+  <text class="body" x="1075" y="410">Pinned executable + process</text>
+  <text class="body" x="1075" y="434">PID + 127.0.0.1 only</text>
+  <text class="body" x="1075" y="458">Recorded runtime configuration</text>
+  <path class="flow" d="M995 340 H1025 V387 H1044"/>
+  <path class="flow" d="M995 484 H1025 V435 H1044"/>
+
+  <path class="flow" d="M1187 475 V563 H822 V587"/>
+  <rect class="rss" x="567" y="587" width="510" height="112"/>
+  <text class="label" x="593" y="623">Reddit-backed usability gate</text>
+  <text class="body" x="593" y="651">Fetch a real subreddit page and validate post/comment links.</text>
+  <text class="body" x="593" y="677">Health alone is not a successful install.</text>
+
+  <path class="flow" d="M822 699 V737 H451"/>
+  <rect class="good" x="172" y="718" width="275" height="60"/>
+  <text class="label" x="196" y="755">Write usable v0.1.1 receipt</text>
+  <path class="return" d="M1077 642 H1087"/>
+  <rect class="bad" x="1095" y="586" width="225" height="128"/>
+  <text class="label" x="1118" y="622">Gate fails</text>
+  <text class="body" x="1118" y="649">Keep prior receipt;</text>
+  <text class="body" x="1118" y="672">stop only a process</text>
+  <text class="body" x="1118" y="695">started by this run.</text>
+</svg>

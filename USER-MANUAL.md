@@ -1,21 +1,33 @@
 # Reddit Search + Redlib — user manual
 
+**Project version 0.1.1** · [Changelog](CHANGELOG.md)
+
 ## 1. What you are installing
 
 The skill teaches an AI assistant how to find, read, and summarize Reddit discussions. It includes a Python helper that constructs URLs and converts saved responses into structured records. The helper does not search by itself: your assistant fetches the pages and follows the skill's request limits.
 
-Redlib is an optional separate service. It retrieves Reddit content and presents it as HTML. The skill can use that HTML to recover fuller posts and available comment structure. You can start with RSS and add Redlib later.
+Redlib is a separate service that retrieves Reddit content and presents it as HTML. The Windows installer sets it up by default; choose its explicit RSS-only mode if you want to omit it. The skill can use Redlib HTML to recover fuller posts and available comment structure.
+
+![Architecture drawing showing the assistant, Reddit RSS, same-host loopback Redlib, parser, trust boundaries, and citation output.](docs/diagrams/reddit-research-flow.svg)
+
+[Open the full-size architecture diagram](docs/diagrams/reddit-research-flow.svg).
 
 ## 2. Choose your app
 
 ### Codex
 
 1. Download and extract the release ZIP.
-2. Copy the complete `reddit-search` directory into your home folder's `.agents/skills` directory. On Windows this is normally `C:\Users\YOUR-NAME\.agents\skills\reddit-search`.
-3. Keep `SKILL.md`, `scripts`, and `references` together. Do not nest an extra `reddit-search` folder inside it.
+2. From the folder containing its top-level `reddit-search` folder, run this explicit Windows setup command:
+
+   ```powershell
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\reddit-search\scripts\install_windows.ps1
+   ```
+
+   This installs or updates the complete skill and provisions or reuses local Redlib. Windows PowerShell 5.1 can run the entrypoint; it installs/reuses PowerShell 7 and relaunches itself there. Fresh Redlib builds bootstrap missing Python, Git, Rust/MSVC, CMake, NASM, and LLVM where supported. Existing pinned Redlib installs do not require the compiler toolchain.
+3. Wait for the installer receipt. It reports Redlib usable only after a live Reddit-backed content request succeeds. If you want RSS only, explicitly add `-RssOnly`; the receipt will say Redlib was omitted and RSS was not live-tested.
 4. Start a new turn and ask: “Use the reddit-search skill to find recent discussions about [topic].”
 
-Check existing skill directories first. An older skill with the same name can cause confusion. Keep any backup outside directories the host scans for skills.
+The ZIP does not execute anything when unpacked. If the assistant or host has a different supported skill directory, pass it as `-SkillDirectory`.
 
 ### DeepSeek Harness
 
@@ -59,19 +71,30 @@ The skill can be selected automatically when its description matches your reques
 
 The native Windows installer uses no WSL or containers. It builds a pinned Redlib revision rather than shipping a binary. The first build can take time and uses compiler resources.
 
-**Prerequisites:** PowerShell 7, Git for Windows, Rust configured for `x86_64-pc-windows-msvc`, and Visual C++ Build Tools with the C++ workload. The setup script can supply missing CMake, LLVM/Clang, and a hash-verified NASM download. `-SkipPrerequisiteInstall` requires those to be installed already.
+**Prerequisites:** The complete Windows entrypoint can install or reuse PowerShell 7 and Python 3.10+. For a fresh Redlib source build, it also installs or reuses Git for Windows, Rust's MSVC toolchain, Visual C++ Build Tools with the C++ workload, CMake, LLVM/Clang, and a hash-verified NASM download. A complete pinned Redlib installation only needs Git for the retained-source pin check; the compiler toolchain is not required for reuse. Network failures, canceled elevation, and restart requirements are reported instead of being treated as success. The new bootstrap path is implemented but has not been exercised end-to-end; release-prep checks cover RSS-only and reuse of an existing pinned build.
 
-You can ask a local coding assistant:
+Run the bundled one-command installer from the extracted release folder:
 
-> Using reddit-search's bundled Windows instructions, install local Redlib and start it. Use the default loopback address. Verify a real Reddit-backed request, not just health. Report whether it is installed, running, and usable. Do not add a startup task or service.
-
-For manual use, open PowerShell 7 in the repository and run:
 
 ```powershell
-pwsh -NoProfile -File skills/reddit-search/scripts/setup_redlib_windows.ps1 -Start
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\reddit-search\scripts\install_windows.ps1
 ```
 
-Default location: `%LOCALAPPDATA%\RedditSearch\Redlib`.
+This also copies the full skill into `%USERPROFILE%\.agents\skills\reddit-search`, keeps a backup of any prior skill, and checks a small Reddit-backed content response before it writes a success receipt. Add `-RssOnly` only when you want the skill without Redlib; that mode does not attempt Reddit network access.
+
+The entrypoint chooses an explicit `-RedlibInstallRoot` first, then a root in its saved configuration, then `%USERPROFILE%\TownReporterTools\Redlib`, then `%LOCALAPPDATA%\RedditSearch\Redlib`. For a fresh build, use a root beneath LOCALAPPDATA. Existing install receipts and executables are checked against the pinned commit before reuse.
+
+![Windows install flow showing explicit RSS-only mode and the pinned Redlib reuse/build paths, then the live usability gate and failure cleanup.](docs/diagrams/windows-install-flow.svg)
+
+[Open the full-size Windows setup diagram](docs/diagrams/windows-install-flow.svg).
+
+The saved mode and last successful setup receipt are stored in `%LOCALAPPDATA%\RedditSearch\config.json`; `get_redlib_config.ps1` reads them. This is saved state, not a live health probe. Start and test before using Redlib for a new task:
+
+```powershell
+powershell.exe -NoProfile -File .\reddit-search\scripts\get_redlib_config.ps1
+```
+
+Default Redlib location for a fresh build: `%LOCALAPPDATA%\RedditSearch\Redlib`.
 Default address: `http://127.0.0.1:18080`.
 
 The script pins source revision `a4d36e954cf1bd64f209cd8868c5a29edc81b374`. The displayed version may still say `0.36.0`; compare the commit rather than the version alone. This pin was usable in the Windows trial, but Reddit's upstream behavior can change.
@@ -79,22 +102,22 @@ The script pins source revision `a4d36e954cf1bd64f209cd8868c5a29edc81b374`. The 
 ### Start, check, stop
 
 ```powershell
-pwsh -NoProfile -File skills/reddit-search/scripts/start_redlib_windows.ps1
-pwsh -NoProfile -File skills/reddit-search/scripts/test_redlib_windows.ps1
-pwsh -NoProfile -File skills/reddit-search/scripts/stop_redlib_windows.ps1
+pwsh -NoProfile -File "$HOME\.agents\skills\reddit-search\scripts\start_redlib_windows.ps1"
+pwsh -NoProfile -File "$HOME\.agents\skills\reddit-search\scripts\test_redlib_windows.ps1"
+pwsh -NoProfile -File "$HOME\.agents\skills\reddit-search\scripts\stop_redlib_windows.ps1"
 ```
 
-You can instead ask your local assistant to perform these actions. The start script launches Redlib without a console window. Closing a browser tab does not stop it. No startup task or Windows service is installed; it must be started again after a reboot.
+You can instead ask your local assistant to perform these actions. When no `-InstallRoot` is supplied, the lifecycle scripts use the root saved in the successful configuration; without a configuration they use `%LOCALAPPDATA%\RedditSearch\Redlib`. An RSS-only saved configuration has no implicit Redlib root. The start script launches Redlib without a console window. Closing a browser tab does not stop it. No startup task or Windows service is installed; it must be started again after a reboot.
 
 The test reports three separate states:
 
 | State | Meaning |
 |---|---|
 | Installed | The executable and installation record exist |
-| Running | The expected local process answers health checks |
+| Running | At the time of the check, the expected local process answers health checks |
 | Usable | A Reddit-backed content request also succeeds |
 
-Use Redlib only when the last state is true. If it is blocked upstream, fall back to RSS and disclose partial coverage. Advanced endpoint and build details are in [windows-redlib.md](skills/reddit-search/references/windows-redlib.md).
+The configuration getter returns the last saved receipt; it does not check present server health. Use Redlib only when a fresh content gate is true. A failed content gate does not silently switch the saved mode or overwrite the previous successful receipt. A server started by that failed installer run is stopped; a preexisting process is left running. Choose RSS-only explicitly when you want to omit Redlib. Advanced endpoint and build details are in the [Windows Redlib guide](https://github.com/scottconverse/reddit-search-redlib/blob/main/skills/reddit-search/references/windows-redlib.md).
 
 ## 5. What the results mean
 
