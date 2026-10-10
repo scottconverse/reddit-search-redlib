@@ -69,6 +69,7 @@ class ReleasePackageTests(unittest.TestCase):
 
             with zipfile.ZipFile(first_output / "reddit-search-redlib.zip") as archive:
                 members = set(archive.namelist())
+                infos = archive.infolist()
                 required = {
                     "reddit-search/VERSION",
                     "reddit-search/README.md",
@@ -81,6 +82,24 @@ class ReleasePackageTests(unittest.TestCase):
                 }
                 self.assertTrue(required.issubset(members))
                 self.assertIsNone(archive.testzip())
+                shipped_source_count = sum(
+                    1 for path in (ROOT / "skills" / "reddit-search").rglob("*")
+                    if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
+                )
+                source_names = [info.filename for info in infos[:shipped_source_count]]
+                self.assertEqual(source_names, sorted(source_names))
+                for info in infos:
+                    with self.subTest(member=info.filename):
+                        self.assertEqual(info.create_system, 3)
+                        self.assertEqual(info.create_version, zipfile.DEFAULT_VERSION)
+                        self.assertEqual(info.extract_version, zipfile.DEFAULT_VERSION)
+                        self.assertEqual(info.external_attr, 0o100644 << 16)
+                        self.assertEqual(info.internal_attr, 0)
+                        self.assertEqual(info.flag_bits, 0)
+                        self.assertEqual(info.extra, b"")
+                        self.assertEqual(info.comment, b"")
+                        self.assertEqual(info.date_time, (2026, 9, 14, 0, 0, 0))
+                        self.assertEqual(info.compress_type, zipfile.ZIP_DEFLATED)
                 version = archive.read("reddit-search/VERSION").decode("utf-8").strip()
                 skill = archive.read("reddit-search/SKILL.md").decode("utf-8")
                 self.assertIn(f'version: "{version}"', skill)

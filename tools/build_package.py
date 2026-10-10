@@ -57,25 +57,36 @@ def normalized_text(path):
     return path.read_bytes().replace(b'\r\n', b'\n').replace(b'\r', b'\n')
 
 
+def archive_info(name):
+    """Construct ZIP entries with identical creator and file attributes on all OSes."""
+    info = zipfile.ZipInfo(name, date_time=(2026, 9, 14, 0, 0, 0))
+    info.create_system = 3  # Unix, independent of the host running this build.
+    info.create_version = zipfile.DEFAULT_VERSION
+    info.extract_version = zipfile.DEFAULT_VERSION
+    info.external_attr = 0o100644 << 16
+    info.internal_attr = 0
+    info.flag_bits = 0
+    info.extra = b''
+    info.comment = b''
+    info.compress_type = zipfile.ZIP_DEFLATED
+    return info
+
+
 with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as archive:
-    for source in sorted(SOURCE.rglob('*')):
+    for source in sorted(SOURCE.rglob('*'), key=lambda item: item.relative_to(SOURCE).as_posix()):
         if source.is_file() and '__pycache__' not in source.parts and source.suffix != '.pyc':
             name = 'reddit-search/' + source.relative_to(SOURCE).as_posix()
-            info = zipfile.ZipInfo(name, date_time=(2026, 9, 14, 0, 0, 0))
-            info.compress_type = zipfile.ZIP_DEFLATED
+            info = archive_info(name)
             archive.writestr(info, normalized_text(source))
     for name in ['LICENSE', 'THIRD-PARTY-NOTICES.md']:
-        info = zipfile.ZipInfo('reddit-search/' + name, date_time=(2026, 9, 14, 0, 0, 0))
-        info.compress_type = zipfile.ZIP_DEFLATED
+        info = archive_info('reddit-search/' + name)
         archive.writestr(info, normalized_text(ROOT / name))
     for name in ('VERSION', *PACKAGE_DOC_FILES):
-        info = zipfile.ZipInfo('reddit-search/' + name, date_time=(2026, 9, 14, 0, 0, 0))
-        info.compress_type = zipfile.ZIP_DEFLATED
+        info = archive_info('reddit-search/' + name)
         archive.writestr(info, normalized_text(ROOT / name))
     for name in DIAGRAM_FILES:
         relative = 'docs/diagrams/' + name
-        info = zipfile.ZipInfo('reddit-search/' + relative, date_time=(2026, 9, 14, 0, 0, 0))
-        info.compress_type = zipfile.ZIP_DEFLATED
+        info = archive_info('reddit-search/' + relative)
         archive.writestr(info, normalized_text(ROOT / relative))
 with zipfile.ZipFile(archive_path) as archive:
     assert archive.testzip() is None
