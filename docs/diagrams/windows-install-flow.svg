@@ -68,7 +68,7 @@
 
   <path class="flow" d="M822 699 V737 H451"/>
   <rect class="good" x="172" y="718" width="275" height="60"/>
-  <text class="label" x="196" y="755">Write usable v0.1.1 receipt</text>
+  <text class="label" x="196" y="755">Write usable v0.1.2 receipt</text>
   <path class="return" d="M1077 642 H1087"/>
   <rect class="bad" x="1095" y="586" width="225" height="128"/>
   <text class="label" x="1118" y="622">Gate fails</text>

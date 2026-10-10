@@ -32,13 +32,15 @@ The helper reports the configured endpoint and the last successful receipt; it d
 
 ## Verified machine path
 
-On the machine tested 2026-09-14:
+Earlier machine verification, 2026-09-14:
 
 - Redlib commit `a4d36e954cf1bd64f209cd8868c5a29edc81b374` from `main` returned HTTP 200 for `/r/foss`, with 25 post records and real `/r/foss/comments/...` links.
 - The build uses native Rust/MSVC. Current Redlib also requires CMake, NASM, and LLVM/Clang for its networking stack.
 - The build target stays under the short `%LOCALAPPDATA%\RedditSearch\Redlib` tree. A deeply nested target can make MSBuild FileTracker fail even when Windows long paths are enabled.
 
 The displayed Redlib version may lag the source revision. Verify `git_commit`, not just the displayed version. The installer retains the pinned source checkout and AGPL license; it does not bundle Redlib binaries.
+
+Fresh-install acceptance, 2026-10-10: Native Windows 11 Pro testing took two runs. The first, elevated bootstrap installed Visual Studio 2022 C++ Build Tools/SDK and LLVM and downloaded portable NASM; it built the pin and passed the Reddit-backed check but exposed a caller hang from inherited handles. The corrected second run used the PowerShell 5.1 entrypoint as a standard user with the default Redlib root absent and fresh Cargo cache/target. It reused the installed C++ toolchain and LLVM, used bundled CMake, and freshly downloaded NASM. PowerShell 7, Git, Python, and Rust were preexisting, so their missing-tool bootstrap paths were not tested. The pinned build completed in 284.8 seconds; the caller exited with captured output pipes closed while the service stayed alive, and the gate returned HTTP 200 with 25 posts and 54 comment links. Follow-up checks returned 25 listing posts, 1 search post, 21 RSS posts, and 25 of 29 reported comments, correctly labeled partial; reuse, stop, restart, and a new content gate after restart passed. Test instances were stopped. This was not a pristine-VM test.
 
 ## Lifecycle scripts
 

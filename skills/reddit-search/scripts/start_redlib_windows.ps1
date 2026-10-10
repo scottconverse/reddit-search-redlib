@@ -47,48 +47,47 @@ if ($recordedPid) {
     }
 }
 
-New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
-$startInfo = [Diagnostics.ProcessStartInfo]::new()
-$startInfo.FileName = $exe
-$startInfo.Arguments = '--address 127.0.0.1'
-$startInfo.WorkingDirectory = Split-Path -Parent $exe
-$startInfo.UseShellExecute = $false
-$startInfo.CreateNoWindow = $true
-$startInfo.Environment['PORT'] = [string]$port
-$startInfo.Environment['REDLIB_ROBOTS_DISABLE_INDEXING'] = 'on'
-$startInfo.Environment['REDLIB_ENABLE_RSS'] = 'on'
-$startInfo.Environment['REDLIB_FULL_URL'] = $baseUrl
-$process = [Diagnostics.Process]::Start($startInfo)
-$process.Id | Set-Content -LiteralPath $pidPath -Encoding ascii
-
-$ready = $false
-try {
-    for ($attempt = 0; $attempt -lt 20; $attempt++) {
-        Start-Sleep -Milliseconds 500
-        if ($process.HasExited) { break }
-        try {
-            $info = Invoke-RestMethod -Uri "$baseUrl/info.json" -TimeoutSec 2
-            if (([string]$info.git_commit).Trim() -ne [string]$config.commit) { throw 'Running Redlib commit differs from the installation record.' }
-            if ($info.config.REDLIB_ENABLE_RSS -ne 'on' -or $info.config.REDLIB_FULL_URL -ne $baseUrl) { throw 'Running Redlib configuration differs from the installation record.' }
-            $listeners = @(Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue)
-            if ($listeners.Count -ne 1) { throw 'Redlib did not create exactly one listener.' }
-            $listener = $listeners[0]
-            $image = Get-RedlibProcessImage -Id ([int]$listener.OwningProcess)
-            $null = Assert-RedlibListenerOwnership -ExpectedExecutable $exe -ListenerPid ([int]$listener.OwningProcess) -RecordedPid $process.Id -LocalAddress ([string]$listener.LocalAddress) -ObservedExecutable $image
-            $ready = $true
-            break
-        } catch {
-            if ($_.Exception.Message -match 'differs from the installation record|listener|loopback|executable') { throw }
-        }
-    }
-    if (-not $ready) { throw 'Redlib started but did not become healthy on loopback.' }
-} catch {
-    if (-not $process.HasExited) { $process.Kill(); $process.WaitForExit(5000) | Out-Null }
-    if ((Test-Path -LiteralPath $pidPath) -and (Get-Content -Raw -LiteralPath $pidPath).Trim() -eq [string]$process.Id) {
-        [System.IO.File]::Delete($pidPath)
-    }
-    throw
+$null = New-Item -ItemType Directory -Force -Path $logRoot
+$launchId = [guid]::NewGuid().ToString('n')
+$resultPath = Join-Path $logRoot "redlib-launch-$launchId.json"
+$daemonScript = Join-Path $PSScriptRoot 'start_redlib_daemon_windows.ps1'
+$pwsh = Join-Path $PSHOME 'pwsh.exe'
+if (-not (Test-Path -LiteralPath $daemonScript -PathType Leaf)) { throw "Detached Redlib launch helper is missing: $daemonScript" }
+if (-not (Test-Path -LiteralPath $pwsh -PathType Leaf)) { throw "PowerShell 7 executable is missing: $pwsh" }
+$installRootFull = [IO.Path]::GetFullPath($InstallRoot)
+$installRootArgument = $installRootFull.TrimEnd([char[]]@('\', '/'))
+$installRootVolume = [IO.Path]::GetPathRoot($installRootFull).TrimEnd([char[]]@('\', '/'))
+if ([string]::Equals($installRootArgument, $installRootVolume, [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'A drive root cannot be used as the Redlib installation root.'
 }
 
-[ordered]@{ running = $true; reused = $false; startedByThisCall = $true; pid = $process.Id; baseUrl = $baseUrl; info = $info } | ConvertTo-Json -Depth 10
+$helperArguments = @(
+    '-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', ('"' + $daemonScript + '"'),
+    '-InstallRoot', ('"' + $installRootArgument + '"'), '-ResultPath', ('"' + $resultPath + '"')
+)
+$helper = Start-Process -FilePath $pwsh -ArgumentList $helperArguments -WorkingDirectory $InstallRoot -WindowStyle Hidden -Verb Open -PassThru
+if (-not $helper.WaitForExit(60000)) {
+    throw "Detached Redlib launch helper exceeded 60 seconds (PID $($helper.Id)); it was left running to finish its bounded health check and cleanup safely."
+}
+if (-not (Test-Path -LiteralPath $resultPath -PathType Leaf)) {
+    throw "Detached Redlib launch helper exited with code $($helper.ExitCode) without writing a result. See logs under $logRoot."
+}
+$launchResult = Get-Content -Raw -LiteralPath $resultPath | ConvertFrom-Json
+if (-not [bool]$launchResult.success) { throw [string]$launchResult.detail }
+if ($helper.ExitCode -ne 0) { throw "Detached Redlib launch helper exited unexpectedly with code $($helper.ExitCode)." }
+$stillRunningHelper = Get-Process -Id ([int]$launchResult.launcherPid) -ErrorAction SilentlyContinue
+if ($stillRunningHelper) { throw "Detached Redlib launch helper PID $($launchResult.launcherPid) is still running after its result was written." }
+[System.IO.File]::Delete($resultPath)
+
+[ordered]@{
+    running = [bool]$launchResult.running
+    reused = [bool]$launchResult.reused
+    startedByThisCall = [bool]$launchResult.startedByThisCall
+    daemonExited = $true
+    pid = [int]$launchResult.pid
+    baseUrl = [string]$launchResult.baseUrl
+    info = $launchResult.info
+    stdoutLog = [string]$launchResult.stdoutLog
+    stderrLog = [string]$launchResult.stderrLog
+} | ConvertTo-Json -Depth 10
 exit 0
