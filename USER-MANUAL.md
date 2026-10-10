@@ -1,6 +1,6 @@
 # Reddit Search + Redlib — user manual
 
-**Project version 0.1.1** · [Changelog](CHANGELOG.md)
+**Project version 0.1.2** · [Changelog](CHANGELOG.md)
 
 ## 1. What you are installing
 
@@ -71,7 +71,9 @@ The skill can be selected automatically when its description matches your reques
 
 The native Windows installer uses no WSL or containers. It builds a pinned Redlib revision rather than shipping a binary. The first build can take time and uses compiler resources.
 
-**Prerequisites:** The complete Windows entrypoint can install or reuse PowerShell 7 and Python 3.10+. For a fresh Redlib source build, it also installs or reuses Git for Windows, Rust's MSVC toolchain, Visual C++ Build Tools with the C++ workload, CMake, LLVM/Clang, and a hash-verified NASM download. A complete pinned Redlib installation only needs Git for the retained-source pin check; the compiler toolchain is not required for reuse. Network failures, canceled elevation, and restart requirements are reported instead of being treated as success. The new bootstrap path is implemented but has not been exercised end-to-end; release-prep checks cover RSS-only and reuse of an existing pinned build.
+**Prerequisites:** The complete Windows entrypoint can install or reuse PowerShell 7 and Python 3.10+. For a fresh Redlib source build, it also installs or reuses Git for Windows, Rust's MSVC toolchain, Visual C++ Build Tools with the C++ workload, CMake, LLVM/Clang, and a hash-verified NASM download. A complete pinned Redlib installation only needs Git for the retained-source pin check; the compiler toolchain is not required for reuse. Network failures, canceled elevation, and restart requirements are reported instead of being treated as success.
+
+**Fresh-build acceptance:** Native Windows 11 Pro testing took two runs. The first, elevated bootstrap installed Visual Studio 2022 C++ Build Tools/SDK and LLVM and downloaded portable NASM; it built the pinned commit and passed the Reddit-backed gate, but exposed a caller hang from inherited handles. The corrected second run used the PowerShell 5.1 entrypoint as a standard user with the default Redlib root absent and fresh Cargo cache/target. It reused the installed C++ toolchain and LLVM, used bundled CMake, and freshly downloaded NASM. PowerShell 7, Git, Python, and Rust were already present, so their missing-tool bootstrap paths were not tested. The installer exited successfully in 284.8 seconds while Redlib remained alive and the captured caller output pipes closed; its gate returned HTTP 200 with 25 posts and 54 comment links. Follow-up checks returned 25 listing posts, 1 search post, 21 RSS posts, and 25 of 29 reported comments, correctly marked partial. Reuse, stop, restart, and a new content gate after restart passed; test instances were stopped afterward. This was not a pristine-VM test.
 
 Run the bundled one-command installer from the extracted release folder:
 

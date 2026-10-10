@@ -2,7 +2,7 @@
 name: reddit-search
 description: Research Reddit discussions with traceable permalinks, dates, and honest coverage. Use for practitioner experience, product opinions, troubleshooting, community consensus, or whenever the user asks what Reddit or a subreddit says. Combines Reddit RSS with optional Redlib enrichment rather than depending on one access path.
 metadata:
-  version: "0.1.1"
+  version: "0.1.2"
 ---
 
 # Reddit research

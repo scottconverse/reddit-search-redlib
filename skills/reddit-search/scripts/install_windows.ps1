@@ -25,6 +25,7 @@ $script:SkillCoreFiles = @(
     'scripts\redlib_windows_common.ps1',
     'scripts\setup_redlib_windows.ps1',
     'scripts\start_redlib_windows.ps1',
+    'scripts\start_redlib_daemon_windows.ps1',
     'scripts\test_redlib_windows.ps1',
     'scripts\stop_redlib_windows.ps1',
     'references\access-and-schema.md',

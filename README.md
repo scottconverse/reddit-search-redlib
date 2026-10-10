@@ -4,7 +4,7 @@
 
 [Project site](https://scottconverse.github.io/reddit-search-redlib/) · [User manual](USER-MANUAL.md) · [Releases](https://github.com/scottconverse/reddit-search-redlib/releases) · [Report an issue](https://github.com/scottconverse/reddit-search-redlib/issues)
 
-**Version 0.1.1** · [Changelog](CHANGELOG.md)
+**Version 0.1.2** · [Changelog](CHANGELOG.md)
 
 Reddit Search + Redlib is an Agent Skill: research instructions, a small Python parser, and a native Windows installer for [Redlib](https://github.com/redlib-org/redlib). Your existing assistant performs the search and reasoning using its own network and execution tools. This project adds no model, hosted search service, subscription, or MCP server.
 
@@ -40,7 +40,9 @@ It installs or updates the skill, provisions or reuses native Redlib, starts or 
 
 Use `-RssOnly` only when you want to omit Redlib. Its receipt confirms the skill and parser setup; it does not claim that RSS access was tested. The ZIP does not execute anything when extracted.
 
-Fresh compiler/toolchain bootstrap has not been exercised end-to-end. Release-prep checks cover RSS-only setup and reuse of a recorded pinned installation. See the [Windows setup and troubleshooting guide](USER-MANUAL.md#4-optional-local-redlib-on-windows).
+Fresh-build testing on native Windows 11 Pro took two runs. The first, elevated bootstrap installed the missing Visual Studio 2022 C++ Build Tools/SDK and LLVM and downloaded portable NASM; it built the pinned Redlib commit and passed the Reddit-backed gate, but exposed a caller hang from inherited process handles. The corrected second run used the PowerShell 5.1 entrypoint as a standard user, with the default Redlib root absent and a fresh Cargo cache and target. It reused the installed C++ toolchain and LLVM, used bundled CMake, and freshly downloaded NASM. PowerShell 7, Git, Python, and Rust were already present, so their missing-tool bootstrap paths were not tested. The build exited successfully in 284.8 seconds while Redlib remained alive and the captured caller output pipes closed. The Reddit-backed gate returned HTTP 200 with 25 posts and 54 comment links. This was not a pristine-VM test. See the [Windows setup and troubleshooting guide](USER-MANUAL.md#4-optional-local-redlib-on-windows).
+
+Follow-up acceptance exercised listing (25 posts), search (1 post), RSS (21 posts), and a thread with 25 of 29 reported comments, correctly labeled partial. Redlib reuse, stop, restart, and a fresh content gate after restart passed; test instances were stopped afterward.
 
 On other hosts, install the complete `reddit-search` skill folder using that app's supported skill directory. A bare folder copy is the installation method for non-Windows hosts; Windows users should use the full installer above.
 

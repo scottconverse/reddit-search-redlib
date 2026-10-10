@@ -230,6 +230,29 @@ class RedlibInstallerTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("guards passed", result.stdout)
 
+    def test_new_redlib_process_is_detached_from_starting_caller(self):
+        with scratch_directory() as scratch:
+            root = Path(scratch)
+            result = self.run_pwsh(
+                [
+                    SCRIPTS / "tests" / "test_redlib_start_detach.ps1",
+                    "-StartScript", SCRIPTS / "start_redlib_windows.ps1",
+                    "-VerifierScript", SCRIPTS / "test_redlib_windows.ps1",
+                    "-StopScript", SCRIPTS / "stop_redlib_windows.ps1",
+                    "-WorkRoot", root / "detach harness",
+                    "-PwshPath", PWSH,
+                ],
+                self.isolated_env(root),
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            report = json.loads(result.stdout)
+            self.assertTrue(report["callerExited"])
+            self.assertTrue(report["stdoutClosed"])
+            self.assertTrue(report["stderrClosed"])
+            self.assertTrue(report["childAlive"])
+            self.assertTrue(report["usable"])
+            self.assertEqual(report["listener"], "127.0.0.1")
+
     def test_package_builder_includes_complete_windows_setup_without_binary(self):
         with scratch_directory() as scratch:
             output = Path(scratch) / "package"
@@ -246,7 +269,9 @@ class RedlibInstallerTests(unittest.TestCase):
                     "scripts/redlib_windows_common.ps1",
                     "scripts/setup_redlib_windows.ps1",
                     "scripts/start_redlib_windows.ps1",
+                    "scripts/start_redlib_daemon_windows.ps1",
                     "scripts/test_redlib_windows.ps1",
+                    "scripts/tests/test_redlib_start_detach.ps1",
                     "scripts/stop_redlib_windows.ps1",
                     "references/windows-redlib.md",
                 ):
