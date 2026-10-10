@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 590" role="img" aria-labelledby="title desc">
+  <title id="title">Reddit research data flow and trust boundaries</title>
+  <desc id="desc">A user gives a request to an existing AI assistant. The assistant fetches Reddit RSS directly or reaches a native loopback Redlib service when it runs on the same Windows host. Retrieved page content is untrusted, normalized by the parser, then summarized with original Reddit links and coverage limits. A cloud assistant cannot assume that its localhost is the user's PC.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#35685a"/></marker>
+    <marker id="arrow-both" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto-start-reverse"><path d="M0 0 L9 4.5 L0 9 Z" fill="#35685a"/></marker>
+    <style>
+      text{font-family:Segoe UI,Arial,sans-serif;fill:#17332f}.title{font-size:27px;font-weight:700}.sub{font-size:15px;fill:#506a64}.lane{font-size:13px;font-weight:700;letter-spacing:1.3px;fill:#506a64}.box{fill:#fff;stroke:#cbd7cf;stroke-width:2;rx:14}.agent{fill:#e8f0e1;stroke:#7f9e70;stroke-width:2;rx:14}.external{fill:#f4ead1;stroke:#c2a663;stroke-width:2;rx:14}.local{fill:#e5edf5;stroke:#7997b5;stroke-width:2;rx:14}.warn{fill:#fff5de;stroke:#c2a663;stroke-width:1.5;rx:10}.label{font-size:18px;font-weight:700}.body{font-size:14px;fill:#506a64}.flow{fill:none;stroke:#35685a;stroke-width:3;marker-end:url(#arrow)}.both{fill:none;stroke:#35685a;stroke-width:2.5;marker-start:url(#arrow-both);marker-end:url(#arrow-both)}.conditional{fill:none;stroke:#627d92;stroke-width:3;stroke-dasharray:8 7;marker-start:url(#arrow-both);marker-end:url(#arrow-both)}
+    </style>
+  </defs>
+  <rect width="1320" height="590" rx="22" fill="#f5f4ee"/>
+  <text class="title" x="34" y="48">Research data flow</text>
+  <text class="sub" x="34" y="75">The skill guides the work; your existing assistant performs fetching and reasoning.</text>
+
+  <rect x="22" y="112" width="642" height="400" rx="20" fill="#eef2e9" stroke="#91a788" stroke-width="2" stroke-dasharray="9 7"/>
+  <text class="lane" x="44" y="142">ASSISTANT EXECUTION HOST · LOCAL APP OR SANDBOX</text>
+  <rect class="box" x="44" y="187" width="145" height="91"/>
+  <text class="label" x="64" y="222">Research</text><text class="label" x="64" y="245">request</text>
+  <rect class="agent" x="231" y="171" width="387" height="128"/>
+  <text class="label" x="255" y="207">Existing AI assistant</text>
+  <text class="body" x="255" y="233">Chooses a route, paces requests,</text>
+  <text class="body" x="255" y="255">and treats fetched text as untrusted data.</text>
+  <rect class="box" x="231" y="363" width="387" height="94"/>
+  <text class="label" x="255" y="400">Reddit Search parser</text>
+  <text class="body" x="255" y="426">Shapes saved responses; it makes no network calls.</text>
+  <path class="flow" d="M189 232 H225"/>
+  <path class="flow" d="M425 300 V356"/>
+
+  <rect class="external" x="726" y="157" width="218" height="105"/>
+  <text class="label" x="752" y="194">Reddit</text>
+  <text class="body" x="752" y="220">RSS and discussions</text>
+  <text class="body" x="752" y="241">are upstream content.</text>
+  <path class="both" d="M618 211 H718"/>
+  <text class="body" x="651" y="194">HTTPS</text>
+
+  <rect x="975" y="112" width="320" height="309" rx="20" fill="#edf2f7" stroke="#7997b5" stroke-width="2" stroke-dasharray="9 7"/>
+  <text class="lane" x="997" y="142">WINDOWS USER'S MACHINE</text>
+  <rect class="local" x="1001" y="184" width="268" height="111"/>
+  <text class="label" x="1027" y="221">Pinned Redlib</text>
+  <text class="body" x="1027" y="247">Separate native process</text>
+  <text class="body" x="1027" y="270">Bound only to 127.0.0.1</text>
+  <path class="flow" d="M1001 225 H951 V262 H944"/>
+  <text class="body" x="950" y="315">Redlib fetches from Reddit</text>
+  <path class="conditional" d="M618 277 H806 V339 H993"/>
+  <text class="body" x="674" y="330">Local HTTP · only when assistant can reach this PC</text>
+  <path class="flow" d="M1135 295 V342 H626 V405 H618"/>
+  <text class="body" x="871" y="389">Retrieved HTML returns for parsing</text>
+
+  <rect class="warn" x="722" y="435" width="573" height="78"/>
+  <text class="label" x="747" y="466">Trust and reachability</text>
+  <text class="body" x="747" y="490">A cloud sandbox's 127.0.0.1 is not automatically the Windows PC.</text>
+  <path class="flow" d="M425 457 V538 H692"/>
+  <rect class="box" x="700" y="520" width="595" height="52"/>
+  <text class="label" x="723" y="553">Answer cites original Reddit URLs and states coverage limits.</text>
+</svg>

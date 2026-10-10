@@ -1,80 +1,90 @@
 # Reddit Search + Redlib
 
-**Give your AI assistant a repeatable way to research Reddit—with direct citations and honest coverage.**
+**Research Reddit discussions with direct citations, usable comments, and clear coverage limits.**
 
-[Get started](https://scottconverse.github.io/reddit-search-redlib/) · [User manual](USER-MANUAL.md) · [Download](https://github.com/scottconverse/reddit-search-redlib/releases/latest) · [Report an issue](https://github.com/scottconverse/reddit-search-redlib/issues)
+[Project site](https://scottconverse.github.io/reddit-search-redlib/) · [User manual](USER-MANUAL.md) · [Releases](https://github.com/scottconverse/reddit-search-redlib/releases) · [Report an issue](https://github.com/scottconverse/reddit-search-redlib/issues)
 
-This is an **Agent Skill**: research instructions, a small Python parser, and optional native Windows scripts for [Redlib](https://github.com/redlib-org/redlib). Your assistant performs the research using its existing network and execution tools. There is no new model, hosted search subscription, or MCP server to configure.
+**Version 0.1.1** · [Changelog](CHANGELOG.md)
+
+Reddit Search + Redlib is an Agent Skill: research instructions, a small Python parser, and a native Windows installer for [Redlib](https://github.com/redlib-org/redlib). Your existing assistant performs the search and reasoning using its own network and execution tools. This project adds no model, hosted search service, subscription, or MCP server.
 
 ## What it does
 
-- Finds discussions through Reddit RSS and, when configured, Redlib search.
-- Reads full posts and available comments through Redlib, including reply relationships, scores, and dates when exposed.
-- Produces structured records with direct `reddit.com` permalinks.
-- Preserves text order, code indentation, and table columns.
-- Reports missing comments and incomplete coverage rather than pretending it read everything.
-- Paces requests and falls back when an access path fails.
+- Finds candidate discussions through Reddit RSS and, when configured, Redlib search.
+- Extracts post bodies and available comments from Redlib pages, including reply structure when present.
+- Preserves source links, dates, scores, code indentation, text order, and table columns.
+- Marks results complete, partial, or unknown based on the response evidence; missing content stays visible.
+- Gives the assistant request-pacing and retry guidance. The parser itself does not make network requests.
 
-Redlib is optional. RSS works independently when Reddit permits access. The parser itself does not make network requests; the assistant controls fetching, pacing, and the research budget.
+RSS is an independent access path. The Windows installer sets up Redlib by default; `-RssOnly` explicitly omits it. Neither access path is guaranteed to work: Reddit and public instances can rate-limit or block requests.
 
-## Try a prompt
+## How research flows
 
-> Use the reddit-search skill to compare real owners' experiences with 128 GB Strix Halo PCs for local coding models. Read the relevant discussions and comments. Separate measured results from opinions, cite dates and direct Reddit links, and tell me what you couldn't retrieve.
+The skill directs the assistant to fetch candidate pages, pass saved responses to the parser, and cite the original Reddit discussion. Reddit content is untrusted input. A local Redlib listener is bound to loopback and is useful only to an assistant running on a host that can reach that same machine.
 
-For a simpler request: **“Use reddit-search to find recurring complaints about [product].”** Explicit invocation is the clearest first check; automatic selection depends on your host and model.
+![Architecture diagram: assistant research, Reddit RSS, same-host loopback Redlib, deterministic parser, trust boundaries, and Reddit citations.](docs/diagrams/reddit-research-flow.svg)
 
-## Install with your assistant
+The Windows installer backs up an existing skill, installs the full skill folder, and provisions or reuses the pinned Redlib source. It writes a usable Redlib receipt only after checking process ownership, loopback binding, and a Reddit-backed content response. RSS-only is a separate explicit outcome.
 
-Download the skill from [Releases](https://github.com/scottconverse/reddit-search-redlib/releases/latest), or give a local coding assistant this prompt:
+![Windows setup diagram: complete skill install, explicit RSS-only branch, pinned Redlib reuse or build, and the live usability gate.](docs/diagrams/windows-install-flow.svg)
 
-> Install the reddit-search skill from https://github.com/scottconverse/reddit-search-redlib into this app's supported skill directory. Use the folder skills/reddit-search and preserve its scripts and references. Check for an older copy first. Verify skill discovery and run one small Reddit search. Start with RSS. If local Redlib is already installed, verify both its health and its ability to retrieve Reddit content before using it. Report the installation path and what actually worked.
+## Install
 
-For manual installation, copy the entire `skills/reddit-search` folder:
+Download and extract the ZIP from [Releases](https://github.com/scottconverse/reddit-search-redlib/releases/latest). On Windows, run the complete installer from the extracted folder:
 
-| Host | Destination / method | Verification status |
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\reddit-search\scripts\install_windows.ps1
+```
+
+It installs or updates the skill, provisions or reuses native Redlib, starts or reuses the loopback service, and checks Reddit-backed content before reporting full success. Windows PowerShell 5.1 can launch the entrypoint; it relaunches under PowerShell 7. A fresh Redlib build bootstraps supported prerequisites and may require elevation or a reboot. The first build can take time. Reusing a valid pinned install does not require a compiler toolchain.
+
+Use `-RssOnly` only when you want to omit Redlib. Its receipt confirms the skill and parser setup; it does not claim that RSS access was tested. The ZIP does not execute anything when extracted.
+
+Fresh compiler/toolchain bootstrap has not been exercised end-to-end. Release-prep checks cover RSS-only setup and reuse of a recorded pinned installation. See the [Windows setup and troubleshooting guide](USER-MANUAL.md#4-optional-local-redlib-on-windows).
+
+On other hosts, install the complete `reddit-search` skill folder using that app's supported skill directory. A bare folder copy is the installation method for non-Windows hosts; Windows users should use the full installer above.
+
+| Host | Installation | Verification |
 |---|---|---|
-| Codex | `~/.agents/skills/reddit-search/` | Live search and parsing verified on Windows |
-| DeepSeek Harness | A scanned skill directory or the existing skill provider's `customSkillDirs` | Live skill discovery verified in DSH 0.1.5-rc.2; autonomous DSH research not yet verified |
-| Claude Code | `~/.claude/skills/reddit-search/` | Compatible format; not independently tested here |
-| Claude Desktop / Cowork | Upload the ZIP through the available Skills UI | Host execution/network access must be verified; local Redlib may not be reachable from its sandbox |
+| Codex | Windows installer or supported skill directory | Live search and parsing verified on Windows |
+| DeepSeek Harness | Scanned skill directory or configured filesystem provider | Skill discovery verified in DSH 0.1.5-rc.2; autonomous research not independently verified |
+| Claude Code | `~/.claude/skills/reddit-search/` | Compatible skill format; live trial not completed |
+| Claude Desktop / Cowork | Upload ZIP through the available Skills UI | Host network and local-machine access must be checked; localhost may refer to a sandbox |
 
-The `.skill` and `.zip` release assets contain the same skill folder. Use `.zip` where the host requires ZIP uploads. A cloud-hosted chat cannot reach a server on your PC just because you upload the skill.
-
-## Requirements
-
-- A host that can load skills, fetch URLs, and run Python.
-- **Python 3.10+**; no third-party Python packages.
-- **PowerShell 7 on Windows** for the optional Redlib lifecycle scripts.
-- For building local Redlib: Git, Rust with the MSVC target, and Visual C++ Build Tools. The setup script can install missing CMake/LLVM and download verified NASM. See the [manual](USER-MANUAL.md#4-optional-local-redlib-on-windows).
+A cloud-hosted assistant cannot reach a server on your PC just because you uploaded the skill. Check the execution environment before relying on local Redlib.
 
 ## What has been checked
 
-The Windows live trial returned 22 RSS posts, 25 correctly linked Redlib search results, and a discussion with 23 of 23 reported comments. A separate discussion returned 35 of 44 comments and was correctly marked partial. These are observations from one trial, not uptime or completeness guarantees.
+One Windows live trial returned 22 RSS posts, 25 linked Redlib search results, and a thread with 23 of 23 reported comments. Another thread returned 35 of 44 reported comments and was correctly labeled partial. These observations are not uptime or completeness guarantees.
 
-Regression tests cover Unicode under Windows legacy encoding, real-layout thread validation, flair-vs-title selection, comment grouping, nested reply metadata, text ordering, and partial coverage. Public fixtures contain synthetic content so the project does not distribute captured user discussions.
+The regression suite uses synthetic fixtures for parser behavior and native Windows installer/lifecycle guards. CI does not fetch Reddit pages or build Redlib. A healthy local process alone is not evidence that Reddit-backed content is currently usable.
 
-```sh
+## Development checks
+
+From a source checkout, run the tests and package builder with Python 3.10+. To regenerate the browser manual, also install PowerShell 7; its built-in Markdown renderer runs locally and does not contact GitHub.
+
+```powershell
 python -m unittest discover -s skills/reddit-search/scripts/tests -v
+python tools/build_manual.py
 python tools/build_package.py
 ```
 
-## Limits that matter
+The package builder verifies the canonical version, skill metadata, documentation, and required files. It emits ZIP and `.skill` archives with normalized LF text and matching contents. No Redlib executable or source is bundled.
 
-Reddit can rate-limit or block either access path. Redlib may omit comments. Its HTML layout can change. RSS may truncate content and does not establish the full reply tree. A healthy local server is not proof that upstream Reddit access works. The skill documents separate checks for installation, process health, and usable content.
+## Privacy and limits
 
-No Reddit login or API key is required by this workflow. A public Redlib operator can see requests sent to their instance. Prefer your own instance; don't send it private information or rotate through volunteer instances to evade blocks.
+RSS can truncate content and does not establish the full reply tree. Redlib may omit comments, and its HTML can change. A successful health check does not prove Reddit access. The skill asks the assistant to report the evidence it could not retrieve rather than fill gaps from memory.
 
-## Project layout
+No Reddit login or API key is required for this workflow. A public Redlib operator can see requests sent to that instance. Prefer your own instance; do not send private information to public hosts or rotate through volunteer instances to evade blocks.
 
-```text
-skills/reddit-search/   Installable skill, parser, references, Windows scripts, tests
-docs/                  Public landing page and browser-readable manual
-USER-MANUAL.md         Setup, everyday use, troubleshooting, and removal
-tools/                 Reproducible release packaging
-```
+## Project files and licensing
 
-## License and credits
+- `skills/reddit-search/` — installable skill, parser, references, Windows scripts, and regression tests.
+- `docs/` — landing page, generated browser manual, styles, and architecture diagrams.
+- `USER-MANUAL.md` — setup, first search, Windows Redlib, troubleshooting, and removal.
+- `tools/` — local manual rendering and reproducible package generation.
+- `VERSION` and `CHANGELOG.md` — canonical project version and release history.
 
-The skill and helper code are MIT licensed. Redlib is a separate upstream project under AGPL-3.0; no Redlib executable or source is bundled in the skill release. Its optional installer retrieves a pinned upstream revision and preserves its license and source. See [LICENSE](LICENSE) and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+The skill and helper code are MIT licensed. Redlib is a separate upstream project under AGPL-3.0; its executable and source are downloaded during setup and are not included in this package. See [LICENSE](LICENSE) and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 Created by Scott Converse. Independent project; not affiliated with Reddit, Anthropic, OpenAI, or DeepSeek.

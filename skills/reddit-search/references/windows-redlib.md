@@ -1,36 +1,63 @@
 # Native Windows Redlib
 
-Read this only when the user asks to install, start, stop, verify, or diagnose a local Redlib on Windows.
+Read this when the user explicitly asks to install, start, stop, verify, or diagnose local Redlib on Windows. The scripts use native Windows tools only; they do not use WSL or containers. Unpacking the ZIP never starts setup.
+
+## Complete Windows install
+
+Run the bundled entrypoint after extracting the archive. From the extracted folder:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\reddit-search\scripts\install_windows.ps1
+```
+
+If the skill folder is already open in a terminal, use `scripts\install_windows.ps1`. Windows PowerShell 5.1 is accepted; the entrypoint installs/reuses PowerShell 7 and relaunches itself there. It also installs/reuses Python 3.10 or newer and runs a local parser URL-build check before it reports that the skill is installed.
+
+The default command installs or updates the skill, then provisions or reuses local Redlib. It reports success only after process ownership/configuration checks and a Reddit-backed content response pass. `-RssOnly` explicitly installs the skill without Redlib; its receipt says RSS network access was not live-tested. A Redlib error never silently changes the saved mode.
+
+For a fresh Redlib build, the installer uses winget package IDs `Git.Git`, `Rustlang.Rustup`, `Microsoft.VisualStudio.2022.BuildTools` with the Visual C++ workload, `Kitware.CMake`, and `LLVM.LLVM`. It downloads the official portable NASM archive and verifies its SHA-256. PowerShell 7 and Python use `Microsoft.PowerShell` and `Python.Python.3.12`. These installations can need network access and Windows elevation. A canceled installer, blocked network request, or restart requirement is reported as a failure; rerun after resolving it.
+
+When reusing a complete pinned Redlib installation, setup verifies its recorded source pin and executable without checking for Cargo, Rust, MSVC, CMake, NASM, or LLVM. Git is needed for the local source provenance check. The running server still has to pass the live content gate.
+
+## Discovery and saved configuration
+
+Unless `-RedlibInstallRoot` is supplied, the entrypoint checks the saved user configuration, then the legacy `%USERPROFILE%\TownReporterTools\Redlib` location, then `%LOCALAPPDATA%\RedditSearch\Redlib`. A valid explicit or saved root takes priority. Fresh source builds must stay beneath `%LOCALAPPDATA%` to keep the Windows build path short and predictable.
+
+The selection and last successful receipt are stored at `%LOCALAPPDATA%\RedditSearch\config.json`. Override that location with `-ConfigPath` for another user or an isolated setup. Read the saved setting as JSON with:
+
+```powershell
+powershell.exe -NoProfile -File .\reddit-search\scripts\get_redlib_config.ps1
+```
+
+The helper reports the configured endpoint and the last successful receipt; it does not probe current health. Before using Redlib in a new research task, run `test_redlib_windows.ps1` and use the adapter only when its fresh `usable` field is true.
 
 ## Verified machine path
 
 On the machine tested 2026-09-14:
 
-- Rust `1.97.1` with the `x86_64-pc-windows-msvc` target is installed.
-- Visual C++ Build Tools are installed, although `cl.exe` is not normally on `PATH`.
-- Docker and Podman are absent.
-- Redlib commit `a4d36e954cf1bd64f209cd8868c5a29edc81b374` from `main` builds successfully with native Rust/MSVC and no WSL.
-- Current Redlib also requires CMake, NASM, and LLVM/Clang to build its browser-emulation networking stack. The setup script installs missing CMake and LLVM copies through `winget`. For NASM it downloads the official portable 3.02 archive, verifies the pinned SHA-256, and unpacks it privately under the Redlib installation; the NASM vendor installer was not reliably discoverable after silent installation. Use `-SkipPrerequisiteInstall` to require all tools to be preinstalled instead.
-- The build target must stay under the short `%LOCALAPPDATA%\RedditSearch\Redlib` tree. A deeply nested source/target path can make MSBuild FileTracker fail even when Windows long paths are otherwise enabled.
-- The resulting executable reports the pinned commit and returned HTTP 200 for `/r/foss`, with 25 post records and real `/r/foss/comments/...` links during verification.
+- Redlib commit `a4d36e954cf1bd64f209cd8868c5a29edc81b374` from `main` returned HTTP 200 for `/r/foss`, with 25 post records and real `/r/foss/comments/...` links.
+- The build uses native Rust/MSVC. Current Redlib also requires CMake, NASM, and LLVM/Clang for its networking stack.
+- The build target stays under the short `%LOCALAPPDATA%\RedditSearch\Redlib` tree. A deeply nested target can make MSBuild FileTracker fail even when Windows long paths are enabled.
 
-The stable `v0.36.0` release is retained as a rollback version but is not the active recommendation because Reddit returned 403 for its older client. The scripts build the newer pinned source locally and retain its AGPL license and source checkout with the installation.
+The displayed Redlib version may lag the source revision. Verify `git_commit`, not just the displayed version. The installer retains the pinned source checkout and AGPL license; it does not bundle Redlib binaries.
 
-## Lifecycle
+## Lifecycle scripts
 
-All scripts default to `%LOCALAPPDATA%\RedditSearch\Redlib` and port `18080`. Override `-InstallRoot` or `-Port` when necessary.
+```powershell
+pwsh -NoProfile -File "$HOME\.agents\skills\reddit-search\scripts\start_redlib_windows.ps1"
+pwsh -NoProfile -File "$HOME\.agents\skills\reddit-search\scripts\test_redlib_windows.ps1"
+pwsh -NoProfile -File "$HOME\.agents\skills\reddit-search\scripts\stop_redlib_windows.ps1"
+```
 
-1. `setup_redlib_windows.ps1` verifies Git, Rust, MSVC, CMake, NASM, and LLVM/Clang; checks out the exact pinned commit; builds with `--locked` under a short target path; and records provenance. It does not start Redlib unless `-Start` is supplied. With `-Start`, it also runs the Reddit-backed usability test and stops the process if that gate fails.
-2. `start_redlib_windows.ps1` starts the recorded executable hidden, binds it to `127.0.0.1`, enables robots exclusion and RSS, and verifies `/info.json`. It refuses to take over an occupied port.
-3. `test_redlib_windows.ps1` verifies the listener, executable ownership, provenance, local configuration, and one Reddit-backed content request. Its `usable` field is the gate for choosing local Redlib.
-4. `stop_redlib_windows.ps1` stops only the recorded PID after verifying that its executable path matches the installation.
+With no explicit `-InstallRoot`, lifecycle scripts resolve the saved root from `%LOCALAPPDATA%\RedditSearch\config.json`; if no saved configuration exists, they use `%LOCALAPPDATA%\RedditSearch\Redlib`. A saved RSS-only configuration does not imply a Redlib path. The recorded installation supplies its port, including custom ports. The start script binds only to `127.0.0.1`, enables RSS, and refuses an occupied or ambiguously owned port. It records whether it started the process or reused the verified listener. The verifier checks the pinned record, listener address, owning PID and executable, Redlib's reported commit/configuration, then requests `/r/foss` and validates post and comment links.
 
-Do not add an automatic logon task or Windows service unless the user separately asks for persistence. On-demand startup avoids maintaining a nonfunctional background server when Reddit blocks the upstream client.
+If the Reddit-backed gate fails, the installer does not write a success receipt or replace the existing configuration. It stops a process only when that installer invocation started it; a preexisting server remains untouched for diagnosis. A prior configuration is copied to a timestamped sibling backup only after a new receipt has passed validation.
+
+No logon task or Windows service is installed. Redlib runs on demand and must be started again after reboot.
 
 ## Safety and interpretation
 
-- Never launch with `--ipv4-only`: it can bind beyond loopback. Use `--address 127.0.0.1`.
+- Never launch with `--ipv4-only`; it can bind beyond loopback. Use `--address 127.0.0.1`.
 - Redlib's environment variables are prefixed, including `REDLIB_ENABLE_RSS`, `REDLIB_FULL_URL`, and `REDLIB_ROBOTS_DISABLE_INDEXING`.
-- The crate/version string may lag the source revision; verify `git_commit`, not only the displayed version.
-- Do not move the pin to a newer `main` commit automatically. A new commit needs a fresh build and live usability review before packaging.
-- If upstream verification fails, stop the local process unless the user is actively diagnosing it, then continue with RSS or a single explicitly acceptable public instance.
+- `/info.json` proves process health, not Reddit access. The separate content request is the usability gate.
+- Do not move the source pin to a newer `main` commit automatically. A new pin needs a fresh build and live usability review before packaging.
+- On upstream blocks, keep the failure category and report partial coverage. Do not cycle through public instances to evade a block.
