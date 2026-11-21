@@ -35,6 +35,7 @@ The helper reports the configured endpoint and the last successful receipt; it d
 Earlier machine verification, 2026-09-14:
 
 - Redlib commit `a4d36e954cf1bd64f209cd8868c5a29edc81b374` from `main` returned HTTP 200 for `/r/foss`, with 25 post records and real `/r/foss/comments/...` links.
+- Approved pin changed on 2026-11-21 to release `v0.40.0`, commit `ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2`.
 - The build uses native Rust/MSVC. Current Redlib also requires CMake, NASM, and LLVM/Clang for its networking stack.
 - The build target stays under the short `%LOCALAPPDATA%\RedditSearch\Redlib` tree. A deeply nested target can make MSBuild FileTracker fail even when Windows long paths are enabled.
 

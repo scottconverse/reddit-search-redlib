@@ -35,9 +35,9 @@ try {
 }
 
 $wrongPin = [pscustomobject]@{
-    schemaVersion = 2; versionId = 'a4d36e9'; commit = '0000000000000000000000000000000000000000'
+    schemaVersion = 2; versionId = 'v0.40.0'; commit = '0000000000000000000000000000000000000000'
     repository = 'https://github.com/redlib-org/redlib.git'; port = 18080; baseUrl = 'http://127.0.0.1:18080'
-    executable = 'C:\Redlib\versions\a4d36e9\bin\redlib.exe'; source = 'C:\Redlib\buildsrc\a4d36e9'
+    executable = 'C:\Redlib\versions\v0.40.0\bin\redlib.exe'; source = 'C:\Redlib\buildsrc\v0.40.0'
 }
 Assert-Throws -Name 'an unapproved pin' -Action { Assert-RedlibInstallRecord -Record $wrongPin -Port 18080 -InstallRoot 'C:\Redlib' }
 Write-Output 'ownership, PID, loopback, pin, config discovery, and vswhere guards passed'

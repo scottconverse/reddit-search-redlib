@@ -9,9 +9,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $portWasSpecified = $PSBoundParameters.ContainsKey('Port')
 . (Join-Path $PSScriptRoot 'redlib_windows_common.ps1')
-$VersionId = 'a4d36e9'
-$PinnedRef = 'main'
-$PinnedCommit = 'a4d36e954cf1bd64f209cd8868c5a29edc81b374'
+$VersionId = 'v0.40.0'
+$PinnedRef = 'v0.40.0'
+$PinnedCommit = 'ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2'
 $Repository = 'https://github.com/redlib-org/redlib.git'
 $NasmUrl = 'https://www.nasm.us/pub/nasm/releasebuilds/3.02/win64/nasm-3.02-win64.zip'
 $NasmSha256 = '161D0BFAFF53C2F9E9F3E69FD0672323EBABAFD1268976A5CEC11BE92A19AEE7'
