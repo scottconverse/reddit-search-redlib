@@ -1,5 +1,5 @@
-$script:RedlibVersionId = 'a4d36e9'
-$script:RedlibPinnedCommit = 'a4d36e954cf1bd64f209cd8868c5a29edc81b374'
+$script:RedlibVersionId = 'v0.40.0'
+$script:RedlibPinnedCommit = 'ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2'
 $script:RedlibRepository = 'https://github.com/redlib-org/redlib.git'
 
 function Convert-VswhereOutputToPath {

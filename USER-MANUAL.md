@@ -99,7 +99,7 @@ powershell.exe -NoProfile -File .\reddit-search\scripts\get_redlib_config.ps1
 Default Redlib location for a fresh build: `%LOCALAPPDATA%\RedditSearch\Redlib`.
 Default address: `http://127.0.0.1:18080`.
 
-The script pins source revision `a4d36e954cf1bd64f209cd8868c5a29edc81b374`. The displayed version may still say `0.36.0`; compare the commit rather than the version alone. This pin was usable in the Windows trial, but Reddit's upstream behavior can change.
+The script pins source revision `ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2` (release `v0.40.0`). The displayed version may lag the source revision; compare the commit rather than the version alone. This pin was usable in the Windows trial, but Reddit's upstream behavior can change.
 
 ### Start, check, stop
 

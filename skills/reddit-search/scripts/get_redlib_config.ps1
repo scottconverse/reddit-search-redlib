@@ -10,7 +10,7 @@ if (-not $config.skillDirectory) { throw 'Saved configuration has no skillDirect
 
 if ($config.mode -eq 'redlib') {
     if (-not $config.redlibInstallRoot -or -not $config.baseUrl) { throw 'Redlib configuration is missing its install root or endpoint.' }
-    if ([string]$config.expectedCommit -ne 'a4d36e954cf1bd64f209cd8868c5a29edc81b374') { throw 'Saved Redlib configuration has an unexpected commit pin.' }
+    if ([string]$config.expectedCommit -ne 'ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2') { throw 'Saved Redlib configuration has an unexpected commit pin.' }
     $port = [int]$config.port
     if ($port -lt 1024 -or $port -gt 65535) { throw 'Saved Redlib port is outside the supported range.' }
     if ([string]$config.baseUrl -ne "http://127.0.0.1:$port") { throw 'Saved Redlib endpoint must use IPv4 loopback.' }

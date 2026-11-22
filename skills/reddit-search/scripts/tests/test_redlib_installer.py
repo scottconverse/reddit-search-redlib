@@ -17,7 +17,8 @@ INSTALLER = SCRIPTS / "install_windows.ps1"
 PWSH = Path(r"C:\Program Files\PowerShell\7\pwsh.exe")
 PS51 = Path(r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
 PYTHON_DIR = Path(sys.executable).parent
-PIN = "a4d36e954cf1bd64f209cd8868c5a29edc81b374"
+PIN = "ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2"
+VERSION_ID = "v0.40.0"
 REPOSITORY = "https://github.com/redlib-org/redlib.git"
 
 
@@ -200,7 +201,7 @@ class RedlibInstallerTests(unittest.TestCase):
             redlib = self.make_install_root(root / "existing-redlib", commit=PIN, port=18123)
             git = shutil.which("git")
             self.assertIsNotNone(git, "Git is needed only to verify the retained source pin")
-            source = Path(redlib) / "buildsrc" / "a4d36e9"
+            source = Path(redlib) / "buildsrc" / VERSION_ID
             subprocess.run([git, "init", "--quiet", str(source)], check=True)
             git_dir = source / ".git"
             (git_dir / "refs" / "heads").mkdir(parents=True, exist_ok=True)
@@ -295,15 +296,15 @@ class RedlibInstallerTests(unittest.TestCase):
 
     def make_install_root(self, root, commit, port=18080):
         root.mkdir(parents=True)
-        source = root / "buildsrc" / "a4d36e9"
+        source = root / "buildsrc" / VERSION_ID
         source.mkdir(parents=True)
-        executable = root / "versions" / "a4d36e9" / "bin" / "redlib.exe"
+        executable = root / "versions" / VERSION_ID / "bin" / "redlib.exe"
         executable.parent.mkdir(parents=True)
         executable.write_bytes(b"scratch executable placeholder")
         record = {
             "schemaVersion": 2,
-            "versionId": "a4d36e9",
-            "ref": "main",
+            "versionId": VERSION_ID,
+            "ref": "v0.40.0",
             "commit": commit,
             "repository": REPOSITORY,
             "executable": str(executable),
