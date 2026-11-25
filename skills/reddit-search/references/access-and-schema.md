@@ -20,10 +20,11 @@ Redlib has operational JSON such as `/info.json`, but it does not currently expo
 
 Authoritative project sources:
 
-- Repository and deployment/configuration: https://github.com/redlib-org/redlib
-- Routes: https://github.com/redlib-org/redlib/blob/main/src/main.rs
-- Search implementation/template: https://github.com/redlib-org/redlib/blob/main/src/search.rs and https://github.com/redlib-org/redlib/blob/main/templates/search.html
-- Thread parsing/templates: https://github.com/redlib-org/redlib/blob/main/src/post.rs, https://github.com/redlib-org/redlib/blob/main/templates/post.html, and https://github.com/redlib-org/redlib/blob/main/templates/comment.html
+- Repository and deployment/configuration (maintained fork used by the Windows installer): https://github.com/Nachtalb/redlib
+- Original project, which stopped loading Reddit pages in late October 2026: https://github.com/redlib-org/redlib
+- Routes: https://github.com/Nachtalb/redlib/blob/main/src/main.rs
+- Search implementation/template: https://github.com/Nachtalb/redlib/blob/main/src/search.rs and https://github.com/Nachtalb/redlib/blob/main/templates/search.html
+- Thread parsing/templates: https://github.com/Nachtalb/redlib/blob/main/src/post.rs, https://github.com/Nachtalb/redlib/blob/main/templates/post.html, and https://github.com/Nachtalb/redlib/blob/main/templates/comment.html
 - Instance registry: https://github.com/redlib-org/redlib-instances
 
 The registry's machine-readable source is `https://raw.githubusercontent.com/redlib-org/redlib-instances/main/instances.json`. It supplies URLs, locations, versions, and optional Cloudflare/SFW notes. Its `updated` field is freshness metadata, not an uptime guarantee.

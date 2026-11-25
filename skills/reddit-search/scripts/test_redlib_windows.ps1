@@ -72,7 +72,13 @@ try {
             } else {
                 $result.usable = $true
             }
-        } elseif ($responseBody -match 'Failed to parse page JSON data|Couldn.t send request to Reddit|Rate limit check failed') {
+        } elseif ($responseBody -match 'Reddit blocked this (request|combined feed)') {
+            $result.failureCategory = 'forbidden_or_challenged'
+            $result.detail = (($responseBody -replace '<[^>]+>', ' ') -replace '\s+', ' ').Trim()
+        } elseif ($responseBody -match 'Reddit is rate limiting this instance') {
+            $result.failureCategory = 'rate_limited'
+            $result.detail = (($responseBody -replace '<[^>]+>', ' ') -replace '\s+', ' ').Trim()
+        } elseif ($responseBody -match 'Failed to parse page JSON data|Couldn.t send request to Reddit|Rate limit check failed|Reddit is having issues') {
             $result.failureCategory = 'upstream_failure'
             $result.detail = (($responseBody -replace '<[^>]+>', ' ') -replace '\s+', ' ').Trim()
         } else {

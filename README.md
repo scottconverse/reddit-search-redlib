@@ -4,9 +4,9 @@
 
 [Project site](https://scottconverse.github.io/reddit-search-redlib/) · [User manual](USER-MANUAL.md) · [Releases](https://github.com/scottconverse/reddit-search-redlib/releases) · [Report an issue](https://github.com/scottconverse/reddit-search-redlib/issues)
 
-**Version 0.1.2** · [Changelog](CHANGELOG.md)
+**Version 0.1.3** · [Changelog](CHANGELOG.md)
 
-Reddit Search + Redlib is an Agent Skill: research instructions, a small Python parser, and a native Windows installer for [Redlib](https://github.com/redlib-org/redlib). Your existing assistant performs the search and reasoning using its own network and execution tools. This project adds no model, hosted search service, subscription, or MCP server.
+Reddit Search + Redlib is an Agent Skill: research instructions, a small Python parser, and a native Windows installer for [Redlib](https://github.com/Nachtalb/redlib), built from the maintained Nachtalb fork. Your existing assistant performs the search and reasoning using its own network and execution tools. This project adds no model, hosted search service, subscription, or MCP server.
 
 ## What it does
 

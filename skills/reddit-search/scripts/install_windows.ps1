@@ -235,6 +235,15 @@ function Test-ParserRuntime {
     }
 }
 
+function Test-CurrentPinRecord {
+    # True only when the root holds a record for the pinned version; an earlier pin is rebuilt.
+    param([string]$Root)
+    $recordPath = Join-Path $Root 'install.json'
+    if (-not (Test-Path -LiteralPath $recordPath -PathType Leaf)) { return $false }
+    try { $record = Get-Content -Raw -LiteralPath $recordPath | ConvertFrom-Json } catch { return $true }
+    return ([string]$record.versionId -eq $script:RedlibVersionId)
+}
+
 function Read-SavedConfig {
     if (-not (Test-Path -LiteralPath $ConfigPath -PathType Leaf)) { return $null }
     $saved = Get-Content -Raw -LiteralPath $ConfigPath | ConvertFrom-Json
@@ -280,7 +289,7 @@ if ($RedlibInstallRoot) {
 
 if (-not $RssOnly) {
     $installRoot = [IO.Path]::GetFullPath($installRoot)
-    $hasInstallRecord = Test-Path -LiteralPath (Join-Path $installRoot 'install.json') -PathType Leaf
+    $hasInstallRecord = Test-CurrentPinRecord -Root $installRoot
     if (-not $hasInstallRecord) {
         $localAppData = [IO.Path]::GetFullPath($env:LOCALAPPDATA).TrimEnd('\')
         $installPrefix = $localAppData + '\'
@@ -338,7 +347,7 @@ if ($RssOnly) {
     exit 0
 }
 
-$hasInstallRecord = Test-Path -LiteralPath (Join-Path $installRoot 'install.json') -PathType Leaf
+$hasInstallRecord = Test-CurrentPinRecord -Root $installRoot
 if (-not $hasInstallRecord) {
     $null = Ensure-BuildTools
     Ensure-RustMsvc
@@ -385,7 +394,7 @@ $receipt = [ordered]@{
     redlibInstallRoot = $installRoot
     baseUrl = "http://127.0.0.1:$Port"
     port = $Port
-    expectedCommit = 'ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2'
+    expectedCommit = '7a061bc8ac48f6613d2d4d78fb679e268a96358f'
     observedCommit = [string]$testResult.observedCommit
     processId = [int]$testResult.listenerPid
     python = $python.path

@@ -35,7 +35,10 @@ The helper reports the configured endpoint and the last successful receipt; it d
 Earlier machine verification, 2026-09-14:
 
 - Redlib commit `a4d36e954cf1bd64f209cd8868c5a29edc81b374` from `main` returned HTTP 200 for `/r/foss`, with 25 post records and real `/r/foss/comments/...` links.
-- Approved pin changed on 2026-11-21 to release `v0.40.0`, commit `ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2`.
+- Approved pin changed on 2026-11-21 to release `v0.40.0`, commit `ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2`. It started and answered locally but could not read subreddit pages.
+- Upstream redlib-org/redlib stopped loading Reddit pages in late October 2026; every page shows `Failed to parse page JSON data` (upstream issue 591). Both `v0.36.0` and `v0.40.0` are affected, and upstream has no newer commit.
+- Approved pin changed on 2026-11-25 to release `2026.1123.1` of the maintained fork https://github.com/Nachtalb/redlib, commit `7a061bc8ac48f6613d2d4d78fb679e268a96358f`. The fork tracks Reddit's blocking (browser fingerprints, HTTP/1.1 for GraphQL, session fallbacks) and keeps the same routes, flags, `REDLIB_*` settings and `/info.json` fields. It needs Rust 1.98 or newer; setup updates the stable toolchain when it is older. This pin has not yet passed a Windows live gate.
+- Setup retires a record left by an earlier pin to `install-<version>.json`, stops a process only when it runs that record's own executable, keeps the earlier files, and builds the new pin beside them.
 - The build uses native Rust/MSVC. Current Redlib also requires CMake, NASM, and LLVM/Clang for its networking stack.
 - The build target stays under the short `%LOCALAPPDATA%\RedditSearch\Redlib` tree. A deeply nested target can make MSBuild FileTracker fail even when Windows long paths are enabled.
 

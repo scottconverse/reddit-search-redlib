@@ -1,6 +1,6 @@
 # Reddit Search + Redlib — user manual
 
-**Project version 0.1.2** · [Changelog](CHANGELOG.md)
+**Project version 0.1.3** · [Changelog](CHANGELOG.md)
 
 ## 1. What you are installing
 
@@ -99,7 +99,7 @@ powershell.exe -NoProfile -File .\reddit-search\scripts\get_redlib_config.ps1
 Default Redlib location for a fresh build: `%LOCALAPPDATA%\RedditSearch\Redlib`.
 Default address: `http://127.0.0.1:18080`.
 
-The script pins source revision `ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2` (release `v0.40.0`). The displayed version may lag the source revision; compare the commit rather than the version alone. This pin was usable in the Windows trial, but Reddit's upstream behavior can change.
+The script pins source revision `7a061bc8ac48f6613d2d4d78fb679e268a96358f` (release `2026.1123.1` of the maintained [Nachtalb/redlib](https://github.com/Nachtalb/redlib) fork). Upstream redlib-org/redlib, including release `v0.40.0`, stopped loading Reddit pages in late October 2026 and shows `Failed to parse page JSON data`. Compare the commit rather than the version alone. This pin has not yet passed a Windows trial, and Reddit's upstream behavior can change.
 
 ### Start, check, stop
 

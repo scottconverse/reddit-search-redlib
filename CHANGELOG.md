@@ -2,6 +2,15 @@
 
 Project versions follow the root `VERSION` file. Redlib's upstream revision is tracked separately in `skills/reddit-search/scripts/redlib_windows_common.ps1` and the Windows reference.
 
+## 0.1.3 (2026-11-25)
+
+- Build Redlib from the maintained fork https://github.com/Nachtalb/redlib, release `2026.1123.1`, commit `7a061bc8ac48f6613d2d4d78fb679e268a96358f`. Upstream redlib-org/redlib, including `v0.40.0`, stopped loading Reddit pages in late October 2026 and shows `Failed to parse page JSON data` on every page, so the Reddit-backed gate could not pass.
+- Retire an install record left by an earlier pin instead of refusing the upgrade. The earlier files stay; only a process running that record's own executable is stopped.
+- Check the pinned source's minimum Rust version before building and update the stable MSVC toolchain when it is older. The fork needs Rust 1.98 or newer.
+- Pass the pinned commit to the build so `/info.json` reports it exactly.
+- Classify the fork's block, rate-limit and outage pages in the usability gate instead of reporting them as not found.
+- Not yet verified: a fresh build and live Reddit-backed gate on native Windows with this pin.
+
 ## 0.1.2 — 2026-10-10
 
 - Detach newly started Redlib from the setup/lifecycle caller by redirecting standard input, output, and error to per-launch files under the owned installation root. The caller can return while Redlib continues serving requests.
