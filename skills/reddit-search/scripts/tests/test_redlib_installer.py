@@ -17,9 +17,9 @@ INSTALLER = SCRIPTS / "install_windows.ps1"
 PWSH = Path(r"C:\Program Files\PowerShell\7\pwsh.exe")
 PS51 = Path(r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
 PYTHON_DIR = Path(sys.executable).parent
-PIN = "ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2"
-VERSION_ID = "v0.40.0"
-REPOSITORY = "https://github.com/redlib-org/redlib.git"
+PIN = "7a061bc8ac48f6613d2d4d78fb679e268a96358f"
+VERSION_ID = "2026.1123.1"
+REPOSITORY = "https://github.com/Nachtalb/redlib.git"
 
 
 def scratch_directory():
@@ -222,6 +222,68 @@ class RedlibInstallerTests(unittest.TestCase):
             self.assertEqual(record["port"], 18123)
             self.assertTrue(Path(record["executable"]).is_file())
 
+    def test_setup_retires_earlier_pin_record_and_keeps_its_files(self):
+        with scratch_directory() as scratch:
+            root = Path(scratch)
+            redlib = root / "localappdata" / "RedditSearch" / "Redlib"
+            earlier_id = "v0.40.0"
+            earlier_exe = redlib / "versions" / earlier_id / "bin" / "redlib.exe"
+            earlier_exe.parent.mkdir(parents=True)
+            earlier_exe.write_bytes(b"scratch executable placeholder")
+            (redlib / "buildsrc" / earlier_id).mkdir(parents=True)
+            earlier_record = {
+                "schemaVersion": 2,
+                "versionId": earlier_id,
+                "ref": earlier_id,
+                "commit": "ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2",
+                "repository": "https://github.com/redlib-org/redlib.git",
+                "executable": str(earlier_exe),
+                "source": str(redlib / "buildsrc" / earlier_id),
+                "port": 18124,
+                "baseUrl": "http://127.0.0.1:18124",
+                "installedAt": "2026-11-21T00:00:00Z",
+            }
+            (redlib / "install.json").write_text(json.dumps(earlier_record), encoding="utf-8")
+            env = self.isolated_env(root)
+            env["PATH"] = r"C:\Windows\System32"
+            result = self.run_pwsh(
+                [SCRIPTS / "setup_redlib_windows.ps1", "-InstallRoot", redlib, "-SkipPrerequisiteInstall"],
+                env,
+            )
+            # No Rust toolchain is reachable, so the new build stops after the earlier record is retired.
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse((redlib / "install.json").exists())
+            retired = redlib / f"install-{earlier_id}.json"
+            self.assertTrue(retired.is_file())
+            self.assertEqual(json.loads(retired.read_text(encoding="utf-8"))["commit"], earlier_record["commit"])
+            self.assertTrue(earlier_exe.is_file())
+
+    def test_setup_refuses_earlier_record_pointing_outside_its_root(self):
+        with scratch_directory() as scratch:
+            root = Path(scratch)
+            redlib = root / "localappdata" / "RedditSearch" / "Redlib"
+            redlib.mkdir(parents=True)
+            outside = root / "elsewhere" / "redlib.exe"
+            outside.parent.mkdir(parents=True)
+            outside.write_bytes(b"scratch executable placeholder")
+            record = {
+                "schemaVersion": 2,
+                "versionId": "v0.40.0",
+                "commit": "ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2",
+                "executable": str(outside),
+                "port": 18125,
+                "baseUrl": "http://127.0.0.1:18125",
+            }
+            (redlib / "install.json").write_text(json.dumps(record), encoding="utf-8")
+            result = self.run_pwsh(
+                [SCRIPTS / "setup_redlib_windows.ps1", "-InstallRoot", redlib, "-SkipPrerequisiteInstall"],
+                self.isolated_env(root),
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("refusing to replace it", (result.stdout + result.stderr).lower())
+            self.assertTrue((redlib / "install.json").is_file())
+            self.assertTrue(outside.is_file())
+
     def test_process_pin_and_loopback_guards(self):
         with scratch_directory() as scratch:
             result = self.run_pwsh(
@@ -304,7 +366,7 @@ class RedlibInstallerTests(unittest.TestCase):
         record = {
             "schemaVersion": 2,
             "versionId": VERSION_ID,
-            "ref": "v0.40.0",
+            "ref": "2026.1123.1",
             "commit": commit,
             "repository": REPOSITORY,
             "executable": str(executable),

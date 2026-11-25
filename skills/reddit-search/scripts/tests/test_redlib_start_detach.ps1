@@ -46,8 +46,8 @@ function Invoke-PowerShellFile {
 $WorkRoot = [IO.Path]::GetFullPath($WorkRoot)
 $installRoot = Join-Path $WorkRoot ('detach-' + [guid]::NewGuid().ToString('n'))
 $null = New-Item -ItemType Directory -Force -Path $installRoot
-$versionRoot = Join-Path $installRoot 'versions\v0.40.0\bin'
-$sourceRoot = Join-Path $installRoot 'buildsrc\v0.40.0'
+$versionRoot = Join-Path $installRoot 'versions\2026.1123.1\bin'
+$sourceRoot = Join-Path $installRoot 'buildsrc\2026.1123.1'
 $logRoot = Join-Path $installRoot 'logs'
 $null = New-Item -ItemType Directory -Force -Path $versionRoot, $sourceRoot
 $exe = Join-Path $versionRoot 'redlib.exe'
@@ -68,7 +68,7 @@ using System.Text;
 
 internal static class FakeRedlib
 {
-    private const string Commit = "ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2";
+    private const string Commit = "7a061bc8ac48f6613d2d4d78fb679e268a96358f";
 
     private static void Main()
     {
@@ -148,10 +148,10 @@ try {
 
     $record = [ordered]@{
         schemaVersion = 2
-        versionId = 'v0.40.0'
-        ref = 'v0.40.0'
-        commit = 'ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2'
-        repository = 'https://github.com/redlib-org/redlib.git'
+        versionId = '2026.1123.1'
+        ref = '2026.1123.1'
+        commit = '7a061bc8ac48f6613d2d4d78fb679e268a96358f'
+        repository = 'https://github.com/Nachtalb/redlib.git'
         executable = $exe
         source = $sourceRoot
         port = $port

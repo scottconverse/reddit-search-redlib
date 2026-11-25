@@ -9,10 +9,10 @@ param(
 $ErrorActionPreference = 'Stop'
 $portWasSpecified = $PSBoundParameters.ContainsKey('Port')
 . (Join-Path $PSScriptRoot 'redlib_windows_common.ps1')
-$VersionId = 'v0.40.0'
-$PinnedRef = 'v0.40.0'
-$PinnedCommit = 'ba116c1186f6b0f9d45f0ae50c827e13eb2f5ea2'
-$Repository = 'https://github.com/redlib-org/redlib.git'
+$VersionId = '2026.1123.1'
+$PinnedRef = '2026.1123.1'
+$PinnedCommit = '7a061bc8ac48f6613d2d4d78fb679e268a96358f'
+$Repository = 'https://github.com/Nachtalb/redlib.git'
 $NasmUrl = 'https://www.nasm.us/pub/nasm/releasebuilds/3.02/win64/nasm-3.02-win64.zip'
 $NasmSha256 = '161D0BFAFF53C2F9E9F3E69FD0672323EBABAFD1268976A5CEC11BE92A19AEE7'
 
@@ -65,9 +65,66 @@ function Start-And-Verify {
     }
 }
 
-# Reuse a complete pinned installation before inspecting compiler prerequisites.
+function Get-RustcVersion {
+    param([string]$RustcExe)
+    $text = (& $RustcExe --version 2>$null | Select-Object -First 1)
+    if ($LASTEXITCODE -ne 0 -or [string]$text -notmatch '^rustc (\d+)\.(\d+)\.(\d+)') { throw "Could not read the Rust compiler version from '$RustcExe'." }
+    return [version]"$($Matches[1]).$($Matches[2]).$($Matches[3])"
+}
+
+function Retire-EarlierPinnedInstall {
+    # A record written for an earlier pin of this installer is retired, not reused.
+    # Its files stay on disk. Only a process proven to run its recorded executable is stopped.
+    param([object]$Record)
+    $oldId = [string]$Record.versionId
+    if ([int]$Record.schemaVersion -ne 2 -or $oldId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$') {
+        throw "Unsupported Redlib installation record; refusing to replace it: $configPath"
+    }
+    $oldExe = [IO.Path]::GetFullPath((Join-Path $InstallRoot "versions\$oldId\bin\redlib.exe"))
+    if (-not [string]::Equals([IO.Path]::GetFullPath([string]$Record.executable), $oldExe, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Earlier Redlib record does not point inside this installation root; refusing to replace it: $configPath"
+    }
+    $pidPath = Join-Path $InstallRoot 'redlib.pid'
+    $candidatePids = @()
+    if (Test-Path -LiteralPath $pidPath -PathType Leaf) {
+        $pidText = (Get-Content -Raw -LiteralPath $pidPath).Trim()
+        if ($pidText -notmatch '^\d+$') { throw 'Redlib PID file is malformed; refusing to stop any process.' }
+        $candidatePids += [int]$pidText
+    }
+    $oldPort = [int]$Record.port
+    if ($oldPort -ge 1024 -and $oldPort -le 65535) {
+        $candidatePids += @(Get-NetTCPConnection -LocalPort $oldPort -State Listen -ErrorAction SilentlyContinue | ForEach-Object { [int]$_.OwningProcess })
+    }
+    foreach ($candidate in ($candidatePids | Select-Object -Unique)) {
+        if (-not (Get-Process -Id $candidate -ErrorAction SilentlyContinue)) { continue }
+        $image = Get-RedlibProcessImage -Id $candidate
+        if (-not [string]::Equals($image, $oldExe, [StringComparison]::OrdinalIgnoreCase)) { continue }
+        Stop-Process -Id $candidate
+        Wait-Process -Id $candidate -Timeout 10 -ErrorAction SilentlyContinue
+        if (Get-Process -Id $candidate -ErrorAction SilentlyContinue) { throw "Earlier Redlib PID $candidate did not stop." }
+    }
+    if (Test-Path -LiteralPath $pidPath -PathType Leaf) { [System.IO.File]::Delete($pidPath) }
+    $retiredPath = Join-Path $InstallRoot "install-$oldId.json"
+    if (Test-Path -LiteralPath $retiredPath) {
+        $retiredPath = Join-Path $InstallRoot ("install-$oldId-" + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ') + '.json')
+    }
+    Move-Item -LiteralPath $configPath -Destination $retiredPath
+}
+
+# A record from an earlier pin is retired so the current pin builds beside it.
+$existing = $null
 if (Test-Path -LiteralPath $configPath -PathType Leaf) {
     $existing = Get-Content -Raw -LiteralPath $configPath | ConvertFrom-Json
+    if ([string]$existing.versionId -and [string]$existing.versionId -ne $VersionId) {
+        $earlierPort = [int]$existing.port
+        Retire-EarlierPinnedInstall -Record $existing
+        if (-not $portWasSpecified -and $earlierPort -ge 1024 -and $earlierPort -le 65535) { $Port = $earlierPort }
+        $existing = $null
+    }
+}
+
+# Reuse a complete pinned installation before inspecting compiler prerequisites.
+if ($existing) {
     if (-not $portWasSpecified) {
         $recordPort = [int]$existing.port
         if ($recordPort -lt 1024 -or $recordPort -gt 65535 -or [string]$existing.baseUrl -ne "http://127.0.0.1:$recordPort") {
@@ -188,12 +245,31 @@ $commit = (& $git -C $sourceRoot rev-parse HEAD).Trim()
 if ($origin -ne $Repository) { throw "Unexpected Redlib source origin: $origin" }
 if ($commit -ne $PinnedCommit) { throw "Pinned commit mismatch. Expected $PinnedCommit; found $commit." }
 
+# The pinned source states its minimum Rust version; an older stable toolchain is updated first.
+$cargoManifest = Get-Content -Raw -LiteralPath (Join-Path $sourceRoot 'Cargo.toml')
+$rustVersionMatch = [regex]::Match($cargoManifest, '(?m)^rust-version\s*=\s*"(\d+)\.(\d+)(?:\.(\d+))?"')
+if ($rustVersionMatch.Success) {
+    $patch = if ($rustVersionMatch.Groups[3].Success) { $rustVersionMatch.Groups[3].Value } else { '0' }
+    $requiredRust = [version]"$($rustVersionMatch.Groups[1].Value).$($rustVersionMatch.Groups[2].Value).$patch"
+    $activeRust = Get-RustcVersion -RustcExe $rustc
+    if ($activeRust -lt $requiredRust) {
+        if ($SkipPrerequisiteInstall) { throw "Redlib needs Rust $requiredRust or newer; found $activeRust. Update Rust with rustup and rerun." }
+        $rustup = Find-Tool -Name 'rustup.exe' -Candidates @((Join-Path $env:USERPROFILE '.cargo\bin\rustup.exe'))
+        if (-not $rustup) { throw "Redlib needs Rust $requiredRust or newer; found $activeRust, and rustup.exe was not found to update it." }
+        & $rustup toolchain install stable-x86_64-pc-windows-msvc --profile minimal
+        if ($LASTEXITCODE -ne 0) { throw 'Rustup could not update stable-x86_64-pc-windows-msvc.' }
+        $env:RUSTUP_TOOLCHAIN = 'stable-x86_64-pc-windows-msvc'
+        $activeRust = Get-RustcVersion -RustcExe $rustc
+        if ($activeRust -lt $requiredRust) { throw "Redlib needs Rust $requiredRust or newer; found $activeRust after updating stable." }
+    }
+}
+
 $builtExe = Join-Path $targetRoot 'release\redlib.exe'
 if (-not (Test-Path -LiteralPath $builtExe)) {
     $quotedDevCmd = '"' + $devCmd + '"'
     $quotedSource = '"' + $sourceRoot + '"'
     $toolPaths = @((Split-Path -Parent $cmake), (Split-Path -Parent $nasm), (Split-Path -Parent $clang)) -join ';'
-    $buildCommand = "call $quotedDevCmd -arch=x64 -host_arch=x64 >nul && set `"PATH=$toolPaths;%PATH%`" && set `"CMAKE_GENERATOR=Visual Studio 17 2022`" && set `"CARGO_TARGET_DIR=$targetRoot`" && cd /d $quotedSource && cargo build --release --locked"
+    $buildCommand = "call $quotedDevCmd -arch=x64 -host_arch=x64 >nul && set `"PATH=$toolPaths;%PATH%`" && set `"CMAKE_GENERATOR=Visual Studio 17 2022`" && set `"CARGO_TARGET_DIR=$targetRoot`" && set `"GIT_HASH=$PinnedCommit`" && set `"REDLIB_RELEASE=$PinnedRef`" && cd /d $quotedSource && cargo build --release --locked"
     & cmd.exe /d /s /c $buildCommand
     if ($LASTEXITCODE -ne 0) { throw "Native Redlib build failed with exit code $LASTEXITCODE." }
 }
